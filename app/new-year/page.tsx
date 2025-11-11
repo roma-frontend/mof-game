@@ -672,10 +672,10 @@ export default function NewYearGames() {
     <div className="min-h-screen bg-gradient-to-br from-red-200 via-amber-200 to-green-200 p-8">
       <div className="relative max-w-7xl mx-auto">
 
-      <div className="fixed left-[2rem] top-[2rem] h-[3rem]">
+      <div className="fixed left-[2rem] top-[2rem]">
           <Button
             onClick={() => window.location.href = '/'}
-            className="group relative px-8 py-4 text-xl font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            className="group relative px-8 py-4 text-xl font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl h-[3rem]"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-shift"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
