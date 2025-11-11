@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Sparkles, Snowflake, Gift, Heart, Wine, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Role {
   name: string;
