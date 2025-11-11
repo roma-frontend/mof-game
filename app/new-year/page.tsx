@@ -3,7 +3,26 @@
 import React, { useState } from 'react';
 import { Sparkles, Snowflake, Gift, Heart, Wine, Users, ChevronDown, ChevronUp } from 'lucide-react';
 
-const games = [
+interface Role {
+  name: string;
+  task: string;
+  hints: string;
+}
+
+interface Game {
+  id: number;
+  name: string;
+  description: string;
+  fullDescription: string;
+  duration: string;
+  players: string;
+  materials: string;
+  food: string;
+  tips: string;
+  roles: Role[];
+}
+
+const games: Game[] = [
   {
     id: 1,
     name: "Գաղտնի Սանտա Կլաուս",
@@ -437,11 +456,11 @@ const games = [
 ];
 
 export default function NewYearGames() {
-  const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [printMode, setPrintMode] = useState(false);
-  const [expandedGame, setExpandedGame] = useState(null);
+  const [expandedGame, setExpandedGame] = useState<number | null>(null);
 
-  const handlePrint = (game) => {
+  const handlePrint = (game: Game) => {
     setSelectedGame(game);
     setPrintMode(true);
     setTimeout(() => window.print(), 100);
