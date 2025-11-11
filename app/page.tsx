@@ -116,7 +116,7 @@ const NewYearLanding = () => {
         </div>
 
         {/* CTA Button */}
-        <div className="space-y-6">
+        <div className="space-y-6 text-center">
           <Button
             onClick={() => window.location.href = '/new-year'}
             className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-2xl"
