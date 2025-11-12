@@ -852,7 +852,7 @@ export default function NewYearGames() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
               <Music className="text-purple-600 mr-2" size={24} />
-              <span className="font-bold text-slate-800">Երաժշտություն</span>
+              <span className="font-bold text-slate-800">Ամանորյա երաժշտություն</span>
             </div>
             <button
               onClick={toggleMusic}
