@@ -795,7 +795,7 @@ export default function NewYearGames() {
                   <>
                     <div className="text-center">
                       <div className="text-6xl mb-2">{achievement.icon}</div>
-                      <div className="text-white font-bold text-2xl mb-1">🎉 Достижение разблокировано!</div>
+                      <div className="text-white font-bold text-2xl mb-1">🎉 Նվաճումները ապաակիտվացված են</div>
                       <div className="text-yellow-900 font-bold text-xl">{achievement.name}</div>
                       <div className="text-yellow-800 text-sm">{achievement.description}</div>
                     </div>
@@ -1045,7 +1045,7 @@ export default function NewYearGames() {
               className="relative bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg text-lg flex items-center"
             >
               <Award className="mr-3" size={24} />
-              🏅 Достижения
+              🏅 Նվաճումներ
               {achievements.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                   {achievements.length}
