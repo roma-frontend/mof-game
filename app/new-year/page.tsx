@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { Sparkles, Snowflake, Gift, Heart, Wine, Users, ChevronDown, ChevronUp, Eye, EyeOff, X, UserPlus, Shuffle, Star, Timer, Play, Pause, RotateCcw, Music, Volume2, VolumeX, Trophy, Plus, Minus, Save, Trash2 } from 'lucide-react';
+import { Sparkles, Snowflake, Gift, Heart, Wine, Users, Award, ChevronDown, ChevronUp, Eye, EyeOff, X, UserPlus, Shuffle, Star, Timer, Play, Pause, RotateCcw, Music, Volume2, VolumeX, Trophy, Plus, Minus, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { games, type Game, type Participant } from './games-data';
 
@@ -33,8 +33,14 @@ export default function NewYearGames() {
   const [teamScores, setTeamScores] = useState<{[key: string]: number}>({});
   const [showSavedList, setShowSavedList] = useState(false);
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+  const [showTeamGenerator, setShowTeamGenerator] = useState(false);
+  const [generatedTeams, setGeneratedTeams] = useState<{name: string, members: string[]}[]>([]);
+  const [teamSize, setTeamSize] = useState(3);
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [newAchievement, setNewAchievement] = useState<string | null>(null);
 
-
+  // Загрузка сохраненных участников из localStorage при монтировании
   React.useEffect(() => {
     const saved = localStorage.getItem('savedParticipants');
     if (saved) {
@@ -43,6 +49,10 @@ export default function NewYearGames() {
     const savedScores = localStorage.getItem('teamScores');
     if (savedScores) {
       setTeamScores(JSON.parse(savedScores));
+    }
+    const savedAchievements = localStorage.getItem('achievements');
+    if (savedAchievements) {
+      setAchievements(JSON.parse(savedAchievements));
     }
     
     // Инициализация аудио плеера
@@ -108,6 +118,12 @@ export default function NewYearGames() {
     setRevealMode(true);
     setCurrentRevealIndex(0);
     setIsRevealing(false);
+    
+    // Разблокировка достижений
+    unlockAchievement('first_game');
+    if (participantNames.length >= 10) {
+      unlockAchievement('entertainer');
+    }
   };
 
   const handleRevealRole = () => {
@@ -248,10 +264,19 @@ export default function NewYearGames() {
     };
     setTeamScores(newScores);
     localStorage.setItem('teamScores', JSON.stringify(newScores));
+    
+    // Проверка достижений
+    const totalScore = Object.values(newScores).reduce((sum, score) => sum + score, 0);
+    if (totalScore >= 100) {
+      unlockAchievement('strategist');
+    }
+    if (Object.keys(newScores).length >= 5) {
+      unlockAchievement('party_king');
+    }
   };
 
   const resetScores = () => {
-    if (confirm('Վերակայե՞լ բոլոր կետերը')) {
+    if (confirm('Сбросить все очки?')) {
       setTeamScores({});
       localStorage.removeItem('teamScores');
     }
@@ -259,6 +284,79 @@ export default function NewYearGames() {
 
   const getTeamsList = () => {
     return Array.from(new Set(assignedParticipants.map(p => p.name)));
+  };
+
+  // Достижения
+  const allAchievements = [
+    { id: 'first_game', name: 'Սկսնակ', description: 'Խաղացել է առաջին խաղը', icon: '🎮', color: 'bg-blue-100 border-blue-300 text-blue-700' },
+    { id: 'party_king', name: 'Երեկոյի թագավոր', description: 'Հաղթել է ջից ավել խաղեր', icon: '👑', color: 'bg-yellow-100 border-yellow-300 text-yellow-700' },
+    { id: 'team_player', name: 'Թիմային խաղացող', description: 'Օգնել է թիմին հաղթել', icon: '🤝', color: 'bg-green-100 border-green-300 text-green-700' },
+    { id: 'speedster', name: 'Արագ վազող', description: 'Խաղն ավարտվել է ռեկորդային ժամանակում', icon: '⚡', color: 'bg-purple-100 border-purple-300 text-purple-700' },
+    { id: 'entertainer', name: 'Երեկոյի հոգին', description: 'Մասնակցել է բոլոր խաղերին', icon: '🎭', color: 'bg-pink-100 border-pink-300 text-pink-700' },
+    { id: 'strategist', name: 'Ստրատեգ', description: 'Հավաքել է 100+ միավոր', icon: '🧠', color: 'bg-indigo-100 border-indigo-300 text-indigo-700' },
+    { id: 'collector', name: 'Հավաքորդ', description: 'Վաստակել է 10+ նվաճում', icon: '⭐', color: 'bg-amber-100 border-amber-300 text-amber-700' },
+    { id: 'perfectionist', name: 'Պերֆեկցիոնիստ', description: 'Խաղացել է դերը կատարյալ', icon: '💎', color: 'bg-cyan-100 border-cyan-300 text-cyan-700' }
+  ];
+
+  const unlockAchievement = (achievementId: string) => {
+    if (!achievements.includes(achievementId)) {
+      const newAchievements = [...achievements, achievementId];
+      setAchievements(newAchievements);
+      localStorage.setItem('achievements', JSON.stringify(newAchievements));
+      
+      const achievement = allAchievements.find(a => a.id === achievementId);
+      if (achievement) {
+        setNewAchievement(achievementId);
+        setTimeout(() => setNewAchievement(null), 4000);
+      }
+    }
+  };
+
+  // Генератор команд
+  const teamNames = [
+    'Ձյան փաթիլներ ❄️', 'Ձմեռ պապի թիմ 🎅', 'Էլֆեր 🧝', 'Եղնիկներ 🦌',
+    'Նվերներ 🎁', 'Մանդարիններ 🍊', 'Ձնե մարդիկ ⛄', 'Ասղեր ⭐',
+    'Եղևնիներ 🎄', 'Գարլանդներ 🎀', 'Զանգեր 🔔', 'Կոնֆետներ 🍬'
+  ];
+
+  const generateTeams = () => {
+    const participants = participantInputs.filter(name => name.trim().length > 0);
+    
+    if (participants.length < 2) {
+      alert('Ավելացրեք առնվազն 2 մասնակից!');
+      return;
+    }
+
+    // Перемешиваем участников
+    const shuffled = [...participants].sort(() => Math.random() - 0.5);
+    
+    // Разбиваем на команды
+    const teams: {name: string, members: string[]}[] = [];
+    const numTeams = Math.ceil(shuffled.length / teamSize);
+    
+    for (let i = 0; i < numTeams; i++) {
+      const teamMembers = shuffled.slice(i * teamSize, (i + 1) * teamSize);
+      teams.push({
+        name: teamNames[i % teamNames.length],
+        members: teamMembers
+      });
+    }
+    
+    setGeneratedTeams(teams);
+    unlockAchievement('team_player');
+  };
+
+  const applyTeamsToGame = () => {
+    if (generatedTeams.length === 0) return;
+    
+    // Собираем всех участников из команд
+    const allMembers = generatedTeams.flatMap(team => team.members);
+    const newInputs = [...allMembers];
+    while (newInputs.length < 6) newInputs.push('');
+    
+    setParticipantInputs(newInputs);
+    setShowTeamGenerator(false);
+    alert('✅ Հրամանները կիրառվել են։ Հիմա նշանակեք դերերը.');
   };
 
   if (printAllGames) {
@@ -583,7 +681,7 @@ export default function NewYearGames() {
                   className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center"
                 >
                   <Users size={16} className="mr-1" />
-                  Загрузить сохраненных ({savedParticipants.length})
+                  Բեռնումը պահպանվել է ({savedParticipants.length})
                 </button>
               )}
             </div>
@@ -597,7 +695,7 @@ export default function NewYearGames() {
                     className="text-xs text-rose-600 hover:text-rose-700 flex items-center"
                   >
                     <Trash2 size={14} className="mr-1" />
-                    Очистить
+                    Մաքրել
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -611,7 +709,7 @@ export default function NewYearGames() {
                   onClick={loadSavedParticipants}
                   className="w-full bg-indigo-500 text-white py-2 rounded-lg font-bold hover:bg-indigo-600 transition-all"
                 >
-                  Загрузить этих участников
+                  Բեռնել այս մասնակիցներին
                 </button>
               </div>
             )}
@@ -646,9 +744,20 @@ export default function NewYearGames() {
                 className="flex-1 bg-gradient-to-r from-emerald-400 to-green-500 text-white py-3 rounded-xl font-bold hover:from-emerald-500 hover:to-green-600 transition-all flex items-center justify-center"
               >
                 <Save size={20} className="mr-2" />
-                Сохранить список
+                Պահպանել ցուցակը
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                setShowParticipantsModal(false);
+                setShowTeamGenerator(true);
+              }}
+              className="w-full mt-3 bg-gradient-to-r from-purple-400 to-indigo-500 text-white py-3 rounded-xl font-bold hover:from-purple-500 hover:to-indigo-600 transition-all flex items-center justify-center"
+            >
+              <Shuffle size={20} className="mr-2" />
+              🎲 Գեներացնել թիմեր
+            </button>
           </div>
 
           <div className="flex justify-center space-x-4">
@@ -675,6 +784,27 @@ export default function NewYearGames() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-8">
       <div className="relative max-w-7xl mx-auto">
+
+        {/* Уведомление о новом достижении */}
+        {newAchievement && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 rounded-2xl p-6 shadow-2xl border-4 border-yellow-500">
+              {(() => {
+                const achievement = allAchievements.find(a => a.id === newAchievement);
+                return achievement ? (
+                  <>
+                    <div className="text-center">
+                      <div className="text-6xl mb-2">{achievement.icon}</div>
+                      <div className="text-white font-bold text-2xl mb-1">🎉 Достижение разблокировано!</div>
+                      <div className="text-yellow-900 font-bold text-xl">{achievement.name}</div>
+                      <div className="text-yellow-800 text-sm">{achievement.description}</div>
+                    </div>
+                  </>
+                ) : null;
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Таймер */}
         {showTimer && selectedGameForTimer && (
@@ -719,10 +849,10 @@ export default function NewYearGames() {
 
         {/* Музыкальный плеер */}
         <div className="fixed bottom-8 right-8 bg-white rounded-2xl shadow-2xl p-4 border-2 border-purple-300 z-40 min-w-[300px]">
-          <div className="flex items-center justify-center gap-6 mb-3">
-            <div className="flex items-center gap-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
               <Music className="text-purple-600 mr-2" size={24} />
-              <span className="font-bold text-slate-800">Երաժշտություն</span>
+              <span className="font-bold text-slate-800">Новогодняя музыка</span>
             </div>
             <button
               onClick={toggleMusic}
@@ -757,7 +887,7 @@ export default function NewYearGames() {
                 ))}
               </div>
               <div className="text-xs text-purple-600 text-center">
-                🔊 Ձայն 30%
+                🔊 Ձայն: 30%
               </div>
             </div>
           )}
@@ -818,7 +948,7 @@ export default function NewYearGames() {
             {getTeamsList().length === 0 && (
               <div className="text-center text-slate-500 py-8">
                 <Trophy size={48} className="mx-auto mb-3 text-slate-300" />
-                <p>Նախ, բաշխեք դերերը,<br/>սկսել հաշիվը գրանցել</p>
+                <p>Նախ, բաշխեք դերերը<br/>որպեսզի սկսել գրանցել հաշիվը</p>
               </div>
             )}
 
@@ -827,7 +957,7 @@ export default function NewYearGames() {
               className="w-full bg-gradient-to-r from-rose-500 to-red-600 text-white py-3 rounded-xl font-bold hover:from-rose-600 hover:to-red-700 transition-all flex items-center justify-center"
             >
               <Trash2 size={20} className="mr-2" />
-              Վերագործարկեք բոլոր կետերը
+              Վերագործարկեք բոլոր միավորները
             </button>
           </div>
         )}
@@ -838,7 +968,7 @@ export default function NewYearGames() {
             <div className="flex items-center">
               <Star className="text-amber-500 fill-amber-500 mr-2" size={24} />
               <span className="text-slate-700 font-semibold">
-              Առաջարկվող խաղեր: {favorites.length}
+              Նախընտրած խաղեր: {favorites.length}
               </span>
             </div>
             <button
@@ -900,6 +1030,29 @@ export default function NewYearGames() {
             <Trophy className="mr-3" size={24} />
             🏆 Միավորների աղյուսակ
           </button>
+
+          <div className="flex gap-4 mt-4 justify-center">
+            <button
+              onClick={() => setShowTeamGenerator(true)}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg text-lg flex items-center"
+            >
+              <Shuffle className="mr-3" size={24} />
+              🎲 Թիմերի գեներատոր
+            </button>
+
+            <button
+              onClick={() => setShowAchievements(true)}
+              className="relative bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg text-lg flex items-center"
+            >
+              <Award className="mr-3" size={24} />
+              🏅 Достижения
+              {achievements.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                  {achievements.length}
+                </span>
+              )}
+            </button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -993,7 +1146,7 @@ export default function NewYearGames() {
                   className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold hover:from-emerald-600 hover:to-green-700 transition-all flex items-center justify-center shadow-md text-lg"
                 >
                   <Timer className="mr-3" size={24} />
-                  ⏱️ Գործարկել ժամանակաչափը
+                  ⏱️ Միացնել ժամանակաչափը
                 </button>
 
                 <button
