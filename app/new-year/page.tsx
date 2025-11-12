@@ -34,7 +34,7 @@ export default function NewYearGames() {
   const [showSavedList, setShowSavedList] = useState(false);
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
 
-  // Загрузка сохраненных участников из localStorage при монтировании
+
   React.useEffect(() => {
     const saved = localStorage.getItem('savedParticipants');
     if (saved) {
@@ -170,32 +170,48 @@ export default function NewYearGames() {
     { name: 'Winter Wonderland', url: '/music/winter.mp3' }
   ];
 
-  const toggleMusic = () => {
+  const toggleMusic = async () => {
     if (!audioPlayer) return;
     
     if (musicPlaying) {
       audioPlayer.pause();
       setMusicPlaying(false);
     } else {
-      audioPlayer.src = newYearTracks[currentTrack].url;
-      audioPlayer.play().catch(err => {
+      try {
+        audioPlayer.src = newYearTracks[currentTrack].url;
+        await audioPlayer.load();
+        await audioPlayer.play();
+        setMusicPlaying(true);
+      } catch (err) {
         console.error('Ошибка воспроизведения:', err);
         alert('Не удалось воспроизвести музыку. Проверьте, что файлы находятся в папке /public/music/');
-      });
-      setMusicPlaying(true);
+        setMusicPlaying(false);
+      }
     }
   };
 
-  const changeTrack = (index: number) => {
+  const changeTrack = async (index: number) => {
     if (!audioPlayer) return;
     
-    setCurrentTrack(index);
-    audioPlayer.src = newYearTracks[index].url;
+    const wasPlaying = musicPlaying;
     
-    if (musicPlaying) {
-      audioPlayer.play().catch(err => {
-        console.error('Ошибка воспроизведения:', err);
-      });
+    // Сначала останавливаем текущий трек
+    audioPlayer.pause();
+    
+    setCurrentTrack(index);
+    
+    try {
+      audioPlayer.src = newYearTracks[index].url;
+      audioPlayer.load();
+      
+      // Если музыка играла, включаем новый трек
+      if (wasPlaying) {
+        await audioPlayer.play();
+        setMusicPlaying(true);
+      }
+    } catch (err) {
+      console.error('Ошибка смены трека:', err);
+      setMusicPlaying(false);
     }
   };
 
@@ -689,14 +705,12 @@ export default function NewYearGames() {
                   className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2 rounded-lg font-bold hover:from-emerald-600 hover:to-green-700 transition-all flex items-center justify-center"
                 >
                   {isTimerRunning ? <Pause size={20} className="mr-1" /> : <Play size={20} className="mr-1" />}
-                  {isTimerRunning ? 'Դադար' : 'Սկսել'}
                 </button>
                 <button
                   onClick={() => startTimer(selectedGameForTimer)}
                   className="flex-1 bg-gradient-to-r from-orange-500 to-amber-600 text-white py-2 rounded-lg font-bold hover:from-orange-600 hover:to-amber-700 transition-all flex items-center justify-center"
                 >
                   <RotateCcw size={20} className="mr-1" />
-                  Վերագործարկում
                 </button>
               </div>
             </div>
@@ -705,10 +719,10 @@ export default function NewYearGames() {
 
         {/* Музыкальный плеер */}
         <div className="fixed bottom-8 right-8 bg-white rounded-2xl shadow-2xl p-4 border-2 border-purple-300 z-40 min-w-[300px]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
+          <div className="flex items-center justify-center gap-6 mb-3">
+            <div className="flex items-center gap-6">
               <Music className="text-purple-600 mr-2" size={24} />
-              <span className="font-bold text-slate-800">Նոր տարվա երաժշտություն</span>
+              <span className="font-bold text-slate-800">Երաժշտություն</span>
             </div>
             <button
               onClick={toggleMusic}
@@ -804,7 +818,7 @@ export default function NewYearGames() {
             {getTeamsList().length === 0 && (
               <div className="text-center text-slate-500 py-8">
                 <Trophy size={48} className="mx-auto mb-3 text-slate-300" />
-                <p>Сначала распределите роли,<br/>чтобы начать вести счет</p>
+                <p>Նախ, բաշխեք դերերը,<br/>սկսել հաշիվը գրանցել</p>
               </div>
             )}
 
@@ -884,7 +898,7 @@ export default function NewYearGames() {
             className="mt-4 bg-gradient-to-r from-amber-500 to-yellow-600 text-white px-8 py-4 rounded-xl font-bold hover:from-amber-600 hover:to-yellow-700 transition-all shadow-lg text-lg flex items-center justify-center mx-auto"
           >
             <Trophy className="mr-3" size={24} />
-            🏆 Таблица очков
+            🏆 Միավորների աղյուսակ
           </button>
         </header>
 
