@@ -650,7 +650,7 @@ export default function NewYearGames() {
               className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-12 py-6 rounded-2xl font-bold text-2xl hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
             >
               <Zap size={32} className="mr-3" />
-              {isSpinning ? 'Պտտվում է...' : 'ՊՏԵՔ ԱՆԻՎԸ!'}
+              {isSpinning ? 'Պտտվում է...' : 'ՊՏՏԵՔ ԱՆԻՎԸ!'}
             </button>
           </div>
         ) : (
@@ -682,7 +682,7 @@ export default function NewYearGames() {
                 className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg flex items-center"
               >
                 <RotateCcw size={24} className="mr-2" />
-                Պտտել նորից
+                Կրկին փորձիր
               </button>
             </div>
           </div>
@@ -1546,7 +1546,7 @@ export default function NewYearGames() {
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-4 rounded-xl font-bold hover:from-purple-600 hover:to-pink-700 transition-all shadow-lg text-lg flex items-center"
             >
               <Dices className="mr-3" size={24} />
-              🎡 Колесо Фортуны
+              🎡 Բախտի անիվ
             </button>
 
             <button
