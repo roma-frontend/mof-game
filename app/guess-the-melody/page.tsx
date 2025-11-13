@@ -396,7 +396,7 @@ const GuessTheMelody = () => {
           </div>
           
           <h1 className="text-8xl font-black mb-6 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent drop-shadow-2xl animate-pulse">
-            ԳՈՒՇԱԿԻՐ ՄԵՂԵԴԻՆ
+            Գուշակիր Մեղեդին
           </h1>
           
           <p className="text-3xl text-white/90 mb-12 font-bold animate-fade-in">
@@ -422,7 +422,7 @@ const GuessTheMelody = () => {
             onClick={() => setGameState('setup')}
             className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 hover:from-yellow-500 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-10 text-3xl font-black rounded-full shadow-2xl transform hover:scale-110 transition-all animate-pulse"
           >
-            <Play className="mr-4 w-12 h-12" /> ՍԿՍԵԼ
+            <Play className="mr-4 w-12 h-12" /> Սկսել
           </Button>
         </div>
       </div>
@@ -580,7 +580,7 @@ const GuessTheMelody = () => {
                     </span>
                   ) : (
                     <span className="text-3xl font-black text-white">
-                      🎵 ԳՈՒՇԱԿԵՔ ԵՐԳԸ 🎵
+                      🎵 Գուշակեք Երգը 🎵
                     </span>
                   )}
                   <div className={`px-4 py-1 rounded-full text-sm font-bold ${
@@ -1001,14 +1001,14 @@ const GuessTheMelody = () => {
           {/* Wish Card */}
           <Card className="p-10 bg-gradient-to-r from-pink-600 to-purple-700 text-white mb-8 border-8 border-pink-400 shadow-2xl">
             <h3 className="text-5xl font-black mb-6 text-center animate-pulse">
-              🎭 ԽՆԴՐԱՆՔ ՊԱՐՏՎՈՂԻՑ 🎭
+              🎭 Խնդրանք Հաղթողից 🎭
             </h3>
             <div className="bg-white/20 backdrop-blur-xl p-8 rounded-2xl border-4 border-white/40">
               <div className="text-6xl mb-4 text-center">{loser.avatar}</div>
               <p className="text-4xl font-black mb-6 text-center text-yellow-300">
                 {loser.name}
               </p>
-              <p className="text-3xl font-bold text-center mb-4">ՊԵՏՔ Է ԿԱՏԱՐԵԼ:</p>
+              {/* <p className="text-3xl font-bold text-center mb-4">Պետք է կատարել:</p> */}
               <p className="text-5xl font-black text-center text-yellow-200 animate-bounce">
                 {wish}
               </p>
@@ -1043,7 +1043,7 @@ const GuessTheMelody = () => {
             onClick={resetGame}
             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 py-10 text-3xl font-black shadow-2xl transform hover:scale-105 transition-all"
           >
-            <Play className="mr-4 w-10 h-10" /> ՆՈՐ ԽԱՂԻ ՍԿԻԶԲ 🎮
+            <Play className="mr-4 w-10 h-10" /> Նոր Խաղի Սկիզբ 🎮
           </Button>
         </div>
       </div>
