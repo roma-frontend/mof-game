@@ -220,7 +220,7 @@ export default function NewYearGames() {
     
     const audio = new Audio();
     audio.loop = true;
-    audio.volume = 0.5;
+    audio.volume = 0.3;
     setAudioPlayer(audio);
     
     return () => {
@@ -623,8 +623,8 @@ export default function NewYearGames() {
           <div className="flex items-center justify-center mb-4">
             <Dices className="text-purple-600 animate-bounce" size={56} />
           </div>
-          <h2 className="text-4xl font-bold text-slate-800 mb-2">🎡 Колесо Фортуны</h2>
-          <p className="text-lg text-slate-600">Позвольте судьбе выбрать игру за вас!</p>
+          <h2 className="text-4xl font-bold text-slate-800 mb-2">🎡 Բախտի անիվ</h2>
+          <p className="text-lg text-slate-600">Թող ճակատագիրը ընտրի խաղը ձեզ համար!</p>
         </div>
 
         {!selectedRouletteGame ? (
@@ -637,7 +637,7 @@ export default function NewYearGames() {
               )}
               {isSpinning && (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-2xl font-bold animate-pulse">
-                  ВРАЩАЕТСЯ...
+                  Պտտվում է...
                 </div>
               )}
             </div>
@@ -648,14 +648,14 @@ export default function NewYearGames() {
               className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-12 py-6 rounded-2xl font-bold text-2xl hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
             >
               <Zap size={32} className="mr-3" />
-              {isSpinning ? 'Вращается...' : 'КРУТИТЬ КОЛЕСО!'}
+              {isSpinning ? 'Պտտվում է...' : 'ՊՏԵՔ ԱՆԻՎԸ!'}
             </button>
           </div>
         ) : (
           <div className="text-center animate-in fade-in duration-500">
             <div className="bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl p-8 mb-6 border-4 border-amber-400">
               <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-3xl font-bold text-slate-800 mb-2">Выбрана игра:</h3>
+              <h3 className="text-3xl font-bold text-slate-800 mb-2">Խաղն ընտրված է:</h3>
               <h2 className="text-5xl font-bold text-indigo-700 mb-4">{selectedRouletteGame.name}</h2>
               <p className="text-xl text-slate-700">{selectedRouletteGame.description}</p>
             </div>
@@ -669,7 +669,7 @@ export default function NewYearGames() {
                 className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg flex items-center"
               >
                 <UserPlus size={24} className="mr-2" />
-                Начать игру
+                Սկսել խաղը
               </button>
               <button
                 onClick={() => {
@@ -680,7 +680,7 @@ export default function NewYearGames() {
                 className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg flex items-center"
               >
                 <RotateCcw size={24} className="mr-2" />
-                Крутить снова
+                Պտտել նորից
               </button>
             </div>
           </div>
@@ -1199,7 +1199,6 @@ export default function NewYearGames() {
                   Գեներացնել թիմեր
                 </button>
               </div>
-
               {generatedTeams.length > 0 && (
                 <div className="space-y-4 mb-6">
                   <h3 className="text-xl font-bold text-slate-800 text-center mb-4">
@@ -1300,7 +1299,7 @@ export default function NewYearGames() {
                   <>
                     <div className="text-center">
                       <div className="text-6xl mb-2">{achievement.icon}</div>
-                      <div className="text-white font-bold text-2xl mb-1">🎉 Նվաճումը ապաբլոկավորված է!</div>
+                      <div className="text-white font-bold text-2xl mb-1">🎉 Նվաճումը սպաբլոկավորված է!</div>
                       <div className="text-yellow-900 font-bold text-xl">{achievement.name}</div>
                       <div className="text-yellow-800 text-sm">{achievement.description}</div>
                     </div>
@@ -1536,7 +1535,18 @@ export default function NewYearGames() {
             🏆 Միավորների աղյուսակ
           </button>
 
-          <div className="flex gap-4 mt-4 justify-center">
+          <div className="flex flex-wrap gap-4 mt-4 justify-center">
+            <button
+              onClick={() => {
+                setShowRouletteWheel(true);
+                playSound('click');
+              }}
+              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-4 rounded-xl font-bold hover:from-purple-600 hover:to-pink-700 transition-all shadow-lg text-lg flex items-center"
+            >
+              <Dices className="mr-3" size={24} />
+              🎡 Колесо Фортуны
+            </button>
+
             <button
               onClick={() => setShowTeamGenerator(true)}
               className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg text-lg flex items-center"
