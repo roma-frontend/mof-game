@@ -487,7 +487,7 @@ const GuessTheMelody = () => {
 
             {players.length < 2 && (
               <div className="text-center p-6 bg-orange-500/20 rounded-xl border-2 border-orange-400/50">
-                <p className="text-xl text-orange-200 font-bold">⚠️ Նվազագույնը 2 խաղացող անհրաժեշտ է</p>
+                <p className="text-xl text-orange-200 font-bold">⚠️ Նվազագույնը 2 խաղացող է անհրաժեշտ</p>
               </div>
             )}
 
@@ -750,7 +750,7 @@ const GuessTheMelody = () => {
                     <div className="text-sm text-white/70 space-y-1">
                       <div>Ամենաարագ: {player.fastestGuess?.toFixed(1) || '-'}վ</div>
                       <div>Ճիշտ պատասխաններ: {player.totalGuesses}</div>
-                      <div>Ընթացիկ streak: {player.streak}</div>
+                      <div>Ընթացիկ շարք: {player.streak}</div>
                     </div>
                   </div>
                 ))}
@@ -792,7 +792,7 @@ const GuessTheMelody = () => {
                   <div className="bg-white/20 p-6 rounded-xl">
                     <Flame className="w-12 h-12 mx-auto mb-2 text-orange-300" />
                     <div className="text-3xl font-black text-white">{roundWinner.streak}</div>
-                    <div className="text-white/70">Streak</div>
+                    <div className="text-white/70">Շարք</div>
                   </div>
                   <div className="bg-white/20 p-6 rounded-xl">
                     <Star className="w-12 h-12 mx-auto mb-2 text-yellow-300" />
@@ -988,7 +988,7 @@ const GuessTheMelody = () => {
                       <div className="flex gap-4 text-sm text-gray-600">
                         <span>✅ {player.totalGuesses} ճիշտ</span>
                         <span>⚡ {player.fastestGuess?.toFixed(1) || '-'}վ</span>
-                        <span>🔥 {player.streak} streak</span>
+                        <span>🔥 {player.streak} շարք</span>
                       </div>
                     </div>
                   </div>
