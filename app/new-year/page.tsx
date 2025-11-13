@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState } from 'react';
-import { Sparkles, Snowflake, Gift, Heart, Wine, Users, Award, ChevronDown, ChevronUp, Eye, EyeOff, X, UserPlus, Shuffle, Star, Timer, Play, Pause, RotateCcw, Music, Volume2, VolumeX, Trophy, Plus, Minus, Save, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Snowflake, Gift, Heart, Wine, Users, Award, ChevronDown, ChevronUp, Eye, EyeOff, X, UserPlus, Shuffle, Star, Timer, Play, Pause, RotateCcw, Music, Volume2, VolumeX, Trophy, Plus, Minus, Save, Trash2, Zap, Dices } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { games, type Game, type Participant } from './games-data';
 
@@ -32,14 +32,179 @@ export default function NewYearGames() {
   const [showSavedList, setShowSavedList] = useState(false);
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
   const [showTeamGenerator, setShowTeamGenerator] = useState(false);
-  const [generatedTeams, setGeneratedTeams] = useState<{name: string, members: string[]}[]>([]);
+  const [generatedTeams, setGeneratedTeams] = useState<{name: string, members: string[], avatar: string}[]>([]);
   const [teamSize, setTeamSize] = useState(3);
   const [achievements, setAchievements] = useState<string[]>([]);
   const [showAchievements, setShowAchievements] = useState(false);
   const [newAchievement, setNewAchievement] = useState<string | null>(null);
+  
+  // Новые состояния для улучшений
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSnowfall, setShowSnowfall] = useState(true);
+  const [showRouletteWheel, setShowRouletteWheel] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [selectedRouletteGame, setSelectedRouletteGame] = useState<Game | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const snowflakesRef = useRef<any[]>([]);
 
-  // Загрузка сохраненных участников из localStorage при монтировании
-  React.useEffect(() => {
+  // Аватары для команд
+  const teamAvatars = [
+    '❄️', '🎅', '🧝', '🦌', '🎁', '🍊', '⛄', '⭐',
+    '🎄', '🎀', '🔔', '🍬', '🎉', '✨', '🌟', '💫',
+    '🎊', '🎈', '🧊', '☃️', '🎶', '🍾', '🥂', '🎺'
+  ];
+
+  // Звуковые эффекты
+  const playSound = (type: 'win' | 'click' | 'reveal' | 'timer' | 'achievement') => {
+    if (!soundEnabled) return;
+    
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    switch(type) {
+      case 'win':
+        oscillator.frequency.value = 523.25; // C5
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+        setTimeout(() => {
+          const osc2 = audioContext.createOscillator();
+          const gain2 = audioContext.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioContext.destination);
+          osc2.frequency.value = 659.25; // E5
+          gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          osc2.start(audioContext.currentTime);
+          osc2.stop(audioContext.currentTime + 0.5);
+        }, 200);
+        break;
+      case 'click':
+        oscillator.frequency.value = 800;
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+        break;
+      case 'reveal':
+        oscillator.frequency.value = 440;
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+        break;
+      case 'timer':
+        oscillator.frequency.value = 1000;
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.05);
+        break;
+      case 'achievement':
+        oscillator.frequency.value = 880;
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.8);
+        break;
+    }
+  };
+
+  // Конфетти эффект
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    playSound('win');
+    setTimeout(() => setShowConfetti(false), 5000);
+  };
+
+  // Снегопад эффект
+  useEffect(() => {
+    if (!showSnowfall || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Создаем снежинки
+    const createSnowflakes = () => {
+      snowflakesRef.current = [];
+      for (let i = 0; i < 50; i++) {
+        snowflakesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 3 + 1,
+          speed: Math.random() * 1 + 0.5,
+          wind: Math.random() * 0.5 - 0.25
+        });
+      }
+    };
+
+    createSnowflakes();
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.strokeStyle = 'rgba(200, 220, 255, 0.6)';
+
+      snowflakesRef.current.forEach((flake) => {
+        ctx.beginPath();
+        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        flake.y += flake.speed;
+        flake.x += flake.wind;
+
+        if (flake.y > canvas.height) {
+          flake.y = -10;
+          flake.x = Math.random() * canvas.width;
+        }
+        if (flake.x > canvas.width) flake.x = 0;
+        if (flake.x < 0) flake.x = canvas.width;
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      createSnowflakes();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showSnowfall]);
+
+  // Рулетка для выбора игры
+  const spinRouletteWheel = () => {
+    setIsSpinning(true);
+    playSound('click');
+    
+    const spinDuration = 3000;
+    const randomIndex = Math.floor(Math.random() * games.length);
+    
+    setTimeout(() => {
+      setSelectedRouletteGame(games[randomIndex]);
+      setIsSpinning(false);
+      triggerConfetti();
+      playSound('achievement');
+    }, spinDuration);
+  };
+
+  useEffect(() => {
     const saved = localStorage.getItem('savedParticipants');
     if (saved) {
       setSavedParticipants(JSON.parse(saved));
@@ -53,10 +218,9 @@ export default function NewYearGames() {
       setAchievements(JSON.parse(savedAchievements));
     }
     
-    // Инициализация аудио плеера
     const audio = new Audio();
     audio.loop = true;
-    audio.volume = 0.3; // 30% громкости
+    audio.volume = 0.5;
     setAudioPlayer(audio);
     
     return () => {
@@ -84,6 +248,7 @@ export default function NewYearGames() {
     setRevealMode(false);
     setCurrentRevealIndex(0);
     setIsRevealing(false);
+    playSound('click');
   };
 
   const updateParticipantInput = (index: number, value: string) => {
@@ -94,6 +259,7 @@ export default function NewYearGames() {
 
   const addMoreInputs = () => {
     setParticipantInputs([...participantInputs, '', '']);
+    playSound('click');
   };
 
   const assignRoles = () => {
@@ -116,8 +282,8 @@ export default function NewYearGames() {
     setRevealMode(true);
     setCurrentRevealIndex(0);
     setIsRevealing(false);
+    playSound('win');
     
-    // Разблокировка достижений
     unlockAchievement('first_game');
     if (participantNames.length >= 10) {
       unlockAchievement('entertainer');
@@ -126,6 +292,7 @@ export default function NewYearGames() {
 
   const handleRevealRole = () => {
     setIsRevealing(true);
+    playSound('reveal');
   };
 
   const handleNextParticipant = () => {
@@ -133,6 +300,7 @@ export default function NewYearGames() {
     if (currentRevealIndex < assignedParticipants.length - 1) {
       setCurrentRevealIndex(currentRevealIndex + 1);
     }
+    playSound('click');
   };
 
   const handleRestart = () => {
@@ -141,6 +309,7 @@ export default function NewYearGames() {
     setIsRevealing(false);
     setParticipantInputs(['', '', '', '', '', '']);
     setAssignedParticipants([]);
+    playSound('click');
   };
 
   const toggleFavorite = (gameId: number) => {
@@ -149,6 +318,7 @@ export default function NewYearGames() {
         ? prev.filter(id => id !== gameId)
         : [...prev, gameId]
     );
+    playSound('click');
   };
 
   const startTimer = (game: Game) => {
@@ -158,19 +328,24 @@ export default function NewYearGames() {
     setSelectedGameForTimer(game);
     setShowTimer(true);
     setIsTimerRunning(true);
+    playSound('click');
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isTimerRunning && (timerMinutes > 0 || timerSeconds > 0)) {
       interval = setInterval(() => {
         if (timerSeconds > 0) {
           setTimerSeconds(timerSeconds - 1);
+          if (timerSeconds <= 10 && timerSeconds > 0) {
+            playSound('timer');
+          }
         } else if (timerMinutes > 0) {
           setTimerMinutes(timerMinutes - 1);
           setTimerSeconds(59);
         } else {
           setIsTimerRunning(false);
+          triggerConfetti();
           alert('⏰ Время вышло! Игра завершена!');
         }
       }, 1000);
@@ -198,17 +373,16 @@ export default function NewYearGames() {
         setMusicPlaying(true);
       } catch (err) {
         console.error('Ошибка воспроизведения:', err);
-        alert('Не удалось воспроизвести музыку. Проверьте, что файлы находятся в папке /public/music/');
         setMusicPlaying(false);
       }
     }
+    playSound('click');
   };
 
   const changeTrack = async (index: number) => {
     if (!audioPlayer) return;
     
     const wasPlaying = musicPlaying;
-    
     audioPlayer.pause();
     setCurrentTrack(index);
     
@@ -224,6 +398,7 @@ export default function NewYearGames() {
       console.error('Ошибка смены трека:', err);
       setMusicPlaying(false);
     }
+    playSound('click');
   };
 
   const saveParticipantsList = () => {
@@ -232,6 +407,7 @@ export default function NewYearGames() {
       const uniqueNames = Array.from(new Set([...savedParticipants, ...names]));
       setSavedParticipants(uniqueNames);
       localStorage.setItem('savedParticipants', JSON.stringify(uniqueNames));
+      playSound('achievement');
       alert('✅ Список участников сохранен!');
     }
   };
@@ -242,6 +418,7 @@ export default function NewYearGames() {
       while (newInputs.length < 6) newInputs.push('');
       setParticipantInputs(newInputs);
       setShowSavedList(false);
+      playSound('click');
     }
   };
 
@@ -249,6 +426,7 @@ export default function NewYearGames() {
     if (confirm('Удалить все сохраненные имена?')) {
       setSavedParticipants([]);
       localStorage.removeItem('savedParticipants');
+      playSound('click');
     }
   };
 
@@ -259,6 +437,12 @@ export default function NewYearGames() {
     };
     setTeamScores(newScores);
     localStorage.setItem('teamScores', JSON.stringify(newScores));
+    
+    if (delta > 0) {
+      playSound('win');
+    } else {
+      playSound('click');
+    }
     
     const totalScore = Object.values(newScores).reduce((sum, score) => sum + score, 0);
     if (totalScore >= 100) {
@@ -273,6 +457,7 @@ export default function NewYearGames() {
     if (confirm('Сбросить все очки?')) {
       setTeamScores({});
       localStorage.removeItem('teamScores');
+      playSound('click');
     }
   };
 
@@ -282,9 +467,9 @@ export default function NewYearGames() {
 
   const allAchievements = [
     { id: 'first_game', name: 'Սկսնակ', description: 'Խաղացել է առաջին խաղը', icon: '🎮', color: 'bg-blue-100 border-blue-300 text-blue-700' },
-    { id: 'party_king', name: 'Երեկոյի թագավոր', description: 'Հաղթել է 5-ից ավելի խաղեր', icon: '👑', color: 'bg-yellow-100 border-yellow-300 text-yellow-700' },
+    { id: 'party_king', name: 'Երեկոյի թագավոր', description: 'Հաղթել է 5-ից ավել խաղեր', icon: '👑', color: 'bg-yellow-100 border-yellow-300 text-yellow-700' },
     { id: 'team_player', name: 'Թիմային խաղացող', description: 'Օգնել է թիմին հաղթել', icon: '🤝', color: 'bg-green-100 border-green-300 text-green-700' },
-    { id: 'speedster', name: 'Արագ վազող', description: 'Խաղն ավարտել է ռեկորդային ժամանակում', icon: '⚡', color: 'bg-purple-100 border-purple-300 text-purple-700' },
+    { id: 'speedster', name: 'Արագ վազող', description: 'Խաղն ավարտվել է ռեկորդային ժամանակում', icon: '⚡', color: 'bg-purple-100 border-purple-300 text-purple-700' },
     { id: 'entertainer', name: 'Երեկոյի հոգին', description: 'Մասնակցել է բոլոր խաղերին', icon: '🎭', color: 'bg-pink-100 border-pink-300 text-pink-700' },
     { id: 'strategist', name: 'Ստրատեգ', description: 'Հավաքել է 100+ միավոր', icon: '🧠', color: 'bg-indigo-100 border-indigo-300 text-indigo-700' },
     { id: 'collector', name: 'Հավաքորդ', description: 'Վաստակել է 10+ նվաճում', icon: '⭐', color: 'bg-amber-100 border-amber-300 text-amber-700' },
@@ -300,15 +485,17 @@ export default function NewYearGames() {
       const achievement = allAchievements.find(a => a.id === achievementId);
       if (achievement) {
         setNewAchievement(achievementId);
+        triggerConfetti();
+        playSound('achievement');
         setTimeout(() => setNewAchievement(null), 4000);
       }
     }
   };
 
   const teamNames = [
-    'Ձյան փաթիլներ ❄️', 'Ձմեռ պապի թիմ 🎅', 'Էլֆեր 🧝', 'Եղնիկներ 🦌',
-    'Նվերներ 🎁', 'Մանդարիններ 🍊', 'Ձնե մարդիկ ⛄', 'Ասղեր ⭐',
-    'Եղևնիներ 🎄', 'Գարլանդներ 🎀', 'Զանգեր 🔔', 'Կոնֆետներ 🍬'
+    'Ձյան փաթիլներ', 'Ձմեռ պապի թիմ', 'Էլֆեր', 'Եղնիկներ',
+    'Նվերներ', 'Մանդարիններ', 'Ձնե մարդիկ', 'Ասղեր',
+    'Եղևնիներ', 'Գարլանդներ', 'Զանգեր', 'Կոնֆետներ'
   ];
 
   const generateTeams = () => {
@@ -320,19 +507,22 @@ export default function NewYearGames() {
     }
 
     const shuffled = [...participants].sort(() => Math.random() - 0.5);
-    const teams: {name: string, members: string[]}[] = [];
+    const teams: {name: string, members: string[], avatar: string}[] = [];
     const numTeams = Math.ceil(shuffled.length / teamSize);
     
     for (let i = 0; i < numTeams; i++) {
       const teamMembers = shuffled.slice(i * teamSize, (i + 1) * teamSize);
       teams.push({
         name: teamNames[i % teamNames.length],
-        members: teamMembers
+        members: teamMembers,
+        avatar: teamAvatars[i % teamAvatars.length]
       });
     }
     
     setGeneratedTeams(teams);
     unlockAchievement('team_player');
+    playSound('win');
+    triggerConfetti();
   };
 
   const applyTeamsToGame = () => {
@@ -344,8 +534,160 @@ export default function NewYearGames() {
     
     setParticipantInputs(newInputs);
     setShowTeamGenerator(false);
+    playSound('achievement');
     alert('✅ Թիմերը կիրառվել են։ Հիմա նշանակեք դերերը։');
   };
+
+  // Конфетти компонент
+  const ConfettiCanvas = () => {
+    const confettiRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+      if (!showConfetti || !confettiRef.current) return;
+
+      const canvas = confettiRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles: any[] = [];
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+
+      for (let i = 0; i < 150; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          r: Math.random() * 6 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: Math.random() * 4 - 2,
+          vy: Math.random() * 5 + 2,
+          rotation: Math.random() * 360,
+          rotationSpeed: Math.random() * 10 - 5
+        });
+      }
+
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach((p, index) => {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r);
+          ctx.restore();
+
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.2;
+          p.rotation += p.rotationSpeed;
+
+          if (p.y > canvas.height) {
+            particles.splice(index, 1);
+          }
+        });
+
+        if (particles.length > 0) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      animate();
+    }, [showConfetti]);
+
+    return showConfetti ? (
+      <canvas
+        ref={confettiRef}
+        className="fixed inset-0 pointer-events-none z-50"
+      />
+    ) : null;
+  };
+
+  // Рулетка компонент
+  const RouletteWheel = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl max-w-4xl w-full p-8 relative">
+        <button
+          onClick={() => {
+            setShowRouletteWheel(false);
+            playSound('click');
+          }}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <X size={32} />
+        </button>
+
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <Dices className="text-purple-600 animate-bounce" size={56} />
+          </div>
+          <h2 className="text-4xl font-bold text-slate-800 mb-2">🎡 Колесо Фортуны</h2>
+          <p className="text-lg text-slate-600">Позвольте судьбе выбрать игру за вас!</p>
+        </div>
+
+        {!selectedRouletteGame ? (
+          <div className="text-center">
+            <div className={`mx-auto w-80 h-80 rounded-full border-8 border-indigo-500 bg-gradient-to-br from-purple-400 via-pink-400 to-orange-400 mb-8 flex items-center justify-center relative overflow-hidden shadow-2xl ${
+              isSpinning ? 'animate-spin' : ''
+            }`} style={{ animationDuration: '3s' }}>
+              {!isSpinning && (
+                <div className="text-white text-6xl font-bold">?</div>
+              )}
+              {isSpinning && (
+                <div className="absolute inset-0 flex items-center justify-center text-white text-2xl font-bold animate-pulse">
+                  ВРАЩАЕТСЯ...
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={spinRouletteWheel}
+              disabled={isSpinning}
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-12 py-6 rounded-2xl font-bold text-2xl hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
+            >
+              <Zap size={32} className="mr-3" />
+              {isSpinning ? 'Вращается...' : 'КРУТИТЬ КОЛЕСО!'}
+            </button>
+          </div>
+        ) : (
+          <div className="text-center animate-in fade-in duration-500">
+            <div className="bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl p-8 mb-6 border-4 border-amber-400">
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-3xl font-bold text-slate-800 mb-2">Выбрана игра:</h3>
+              <h2 className="text-5xl font-bold text-indigo-700 mb-4">{selectedRouletteGame.name}</h2>
+              <p className="text-xl text-slate-700">{selectedRouletteGame.description}</p>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => {
+                  openParticipantsModal(selectedRouletteGame);
+                  setShowRouletteWheel(false);
+                }}
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg flex items-center"
+              >
+                <UserPlus size={24} className="mr-2" />
+                Начать игру
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedRouletteGame(null);
+                  setIsSpinning(false);
+                  playSound('click');
+                }}
+                className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg flex items-center"
+              >
+                <RotateCcw size={24} className="mr-2" />
+                Крутить снова
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   if (printAllGames) {
     return (
@@ -550,7 +892,10 @@ export default function NewYearGames() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl max-w-4xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
             <button
-              onClick={() => setShowParticipantsModal(false)}
+              onClick={() => {
+                setShowParticipantsModal(false);
+                playSound('click');
+              }}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
             >
               <X size={32} />
@@ -612,7 +957,10 @@ export default function NewYearGames() {
                   ) : (
                     <div className="space-y-4">
                       <button
-                        onClick={() => setShowParticipantsModal(false)}
+                        onClick={() => {
+                          setShowParticipantsModal(false);
+                          triggerConfetti();
+                        }}
                         className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-10 py-5 rounded-xl font-bold text-xl hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg flex items-center mx-auto"
                       >
                         <Gift size={28} className="mr-3" />
@@ -641,7 +989,10 @@ export default function NewYearGames() {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl max-w-3xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
           <button
-            onClick={() => setShowParticipantsModal(false)}
+            onClick={() => {
+              setShowParticipantsModal(false);
+              playSound('click');
+            }}
             className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <X size={32} />
@@ -665,7 +1016,10 @@ export default function NewYearGames() {
               </label>
               {savedParticipants.length > 0 && (
                 <button
-                  onClick={() => setShowSavedList(!showSavedList)}
+                  onClick={() => {
+                    setShowSavedList(!showSavedList);
+                    playSound('click');
+                  }}
                   className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center"
                 >
                   <Users size={16} className="mr-1" />
@@ -750,7 +1104,10 @@ export default function NewYearGames() {
 
           <div className="flex justify-center space-x-4">
             <button
-              onClick={() => setShowParticipantsModal(false)}
+              onClick={() => {
+                setShowParticipantsModal(false);
+                playSound('click');
+              }}
               className="bg-slate-200 text-slate-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-300 transition-all"
             >
               Չեղարկել
@@ -770,15 +1127,31 @@ export default function NewYearGames() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-8">
-      <div className="relative max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-8 relative overflow-hidden">
+      {/* Снегопад */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{ display: showSnowfall ? 'block' : 'none' }}
+      />
+
+      {/* Конфетти */}
+      <ConfettiCanvas />
+
+      {/* Рулетка */}
+      {showRouletteWheel && <RouletteWheel />}
+
+      <div className="relative max-w-7xl mx-auto z-20">
 
         {/* Модальное окно генератора команд */}
         {showTeamGenerator && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl max-w-2xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
               <button
-                onClick={() => setShowTeamGenerator(false)}
+                onClick={() => {
+                  setShowTeamGenerator(false);
+                  playSound('click');
+                }}
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X size={32} />
@@ -798,14 +1171,20 @@ export default function NewYearGames() {
                 </label>
                 <div className="flex items-center gap-4 mb-4 justify-center">
                   <button
-                    onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
+                    onClick={() => {
+                      setTeamSize(Math.max(2, teamSize - 1));
+                      playSound('click');
+                    }}
                     className="bg-rose-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all"
                   >
                     <Minus size={20} />
                   </button>
                   <span className="text-4xl font-bold text-indigo-600 min-w-[60px] text-center">{teamSize}</span>
                   <button
-                    onClick={() => setTeamSize(teamSize + 1)}
+                    onClick={() => {
+                      setTeamSize(teamSize + 1);
+                      playSound('click');
+                    }}
                     className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-emerald-600 transition-all"
                   >
                     <Plus size={20} />
@@ -921,7 +1300,7 @@ export default function NewYearGames() {
                   <>
                     <div className="text-center">
                       <div className="text-6xl mb-2">{achievement.icon}</div>
-                      <div className="text-white font-bold text-2xl mb-1">🎉 Նվաճումը Ապաբլոկավորված է!</div>
+                      <div className="text-white font-bold text-2xl mb-1">🎉 Նվաճումը ապաբլոկավորված է!</div>
                       <div className="text-yellow-900 font-bold text-xl">{achievement.name}</div>
                       <div className="text-yellow-800 text-sm">{achievement.description}</div>
                     </div>
@@ -1013,7 +1392,7 @@ export default function NewYearGames() {
                 ))}
               </div>
               <div className="text-xs text-purple-600 text-center">
-                🔊 Ձայն: 30%
+                🔊 Ձայն: 50%
               </div>
             </div>
           )}
@@ -1074,7 +1453,7 @@ export default function NewYearGames() {
             {getTeamsList().length === 0 && (
               <div className="text-center text-slate-500 py-8">
                 <Trophy size={48} className="mx-auto mb-3 text-slate-300" />
-                <p>Նախ, բաշխեք դերերը<br/>որպեսզի սկսել գրանցել հաշիվը</p>
+                <p>Նախ, բաշխեք դերերը,<br/>որպեսզի սկսել գրանցել հաշիվը</p>
               </div>
             )}
 
@@ -1130,7 +1509,7 @@ export default function NewYearGames() {
           <div className="flex items-center justify-center mb-6">
             <Snowflake className="text-sky-500 animate-spin" size={56} style={{animationDuration: '3s'}} />
             <h1 className="text-[60px] font-bold bg-gradient-to-r from-slate-700 via-indigo-600 to-blue-600 bg-clip-text text-transparent mx-6">
-              Ամանորյա Խաղերի Հավաքածու
+              Ամանորյա Խաղերի հավաքածու
             </h1>
             <Sparkles className="text-amber-500 animate-pulse" size={56} />
           </div>
@@ -1303,10 +1682,10 @@ export default function NewYearGames() {
             <Sparkles className="text-amber-500 animate-bounce" />
           </div>
           <p className="text-2xl text-slate-800 font-bold mb-2">
-            Շնորհավոր Նոր Տարի և Սուրբ Ծնունդ! 🎄🎉
+            Շնորհավոր Ամանոր և Սուրբ Ծնունդ! 🎄🎉
           </p>
           <p className="text-lg text-slate-600">
-            Վայելեք խաղերը, ստեղծեք անմոռանալի հուշեր և լինեք երջանիկ! 💖
+            Վայելեք խաղերը, ստեղծեք անմոռանալի հուշեր և եղեք երջանիկ! 💖
           </p>
         </footer>
       </div>
