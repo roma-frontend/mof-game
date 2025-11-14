@@ -792,27 +792,59 @@ const GuessTheMelody = () => {
 
           {/* Live Stats */}
           {showStats && (
-            <Card className="mt-6 p-6 bg-white/10 backdrop-blur-xl border-2 border-white/20">
-              <h3 className="text-2xl font-black text-white mb-4 flex items-center gap-2">
-                <TrendingUp /> Կենդանի Վիճակագրություն
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {players.map(player => (
-                  <div key={player.id} className="bg-black/30 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">{player.avatar}</span>
-                      <span className="text-white font-bold">{player.name}</span>
-                    </div>
-                    <div className="text-sm text-white/70 space-y-1">
-                      <div>Ամենաարագ: {player.fastestGuess?.toFixed(1) || '-'}վ</div>
-                      <div>Ճիշտ պատասխաններ: {player.totalGuesses}</div>
-                      <div>Ընթացիկ շարք: {player.streak}</div>
-                    </div>
-                  </div>
-                ))}
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <Card className="max-w-5xl w-full p-8 bg-white/10 backdrop-blur-xl border-4 border-white/30 relative max-h-[90vh] overflow-y-auto">
+      <button
+        onClick={() => setShowStats(false)}
+        className="absolute top-4 right-4 text-white hover:text-red-400 transition-colors"
+      >
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <h3 className="text-4xl font-black text-white mb-6 flex items-center gap-2">
+        <TrendingUp className="w-10 h-10" /> Կենդանի Վիճակագրություն
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {players.map(player => (
+          <div key={player.id} className="bg-gradient-to-br from-purple-600/40 to-pink-600/40 backdrop-blur-xl p-6 rounded-xl border-2 border-white/20">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-4xl">{player.avatar}</span>
+              <span className="text-white font-black text-xl">{player.name}</span>
+            </div>
+            <div className="text-lg text-white/90 space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-300" />
+                <span>Ամենաարագ: <strong className="text-yellow-300">{player.fastestGuess?.toFixed(1) || '-'}վ</strong></span>
               </div>
-            </Card>
-          )}
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-green-300" />
+                <span>Ճիշտ: <strong className="text-yellow-300">{player.totalGuesses}</strong></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-300" />
+                <span>Շարք: <strong className="text-yellow-300">{player.streak}</strong></span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-purple-300" />
+                <span>Միավոր: <strong className="text-yellow-300">{player.score}</strong></span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <Button
+        onClick={() => setShowStats(false)}
+        className="w-full mt-6 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 py-6 text-xl font-bold"
+      >
+        Փակել
+      </Button>
+    </Card>
+  </div>
+)}
         </div>
 
         <div className="fixed left-[2rem] top-[2rem]">
@@ -1060,7 +1092,7 @@ const GuessTheMelody = () => {
 
           {/* All Players Ranking */}
           <Card className="p-8 bg-white/95 backdrop-blur-xl border-4 border-white/50 mb-8">
-            <h3 className="text-4xl font-black mb-6 text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h3 className="text-[50px] font-black mb-6 text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               📊 Ամբողջական Դասակարգում
             </h3>
             <div className="space-y-3">
@@ -1114,7 +1146,7 @@ const GuessTheMelody = () => {
 
           {/* Game Stats */}
           <Card className="p-8 bg-white/95 backdrop-blur-xl border-4 border-blue-400 mb-8">
-            <h3 className="text-4xl font-black mb-6 text-center bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <h3 className="text-[40px] font-black mb-6 text-center bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
               📈 Խաղի Վիճակագրություն
             </h3>
             <div className="grid grid-cols-3 gap-6">

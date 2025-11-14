@@ -77,12 +77,9 @@ const NewYearLanding = () => {
 
         {/* Main title */}
         <div className="text-center mb-12 space-y-6">
-          <h1 className="text-7xl md:text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-red-300 to-pink-300 drop-shadow-2xl animate-pulse">
-            Ամանորյա
+          <h1 className="text-[90px] md:text-[110px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-red-300 to-pink-300 drop-shadow-2xl animate-pulse">
+            Ամանորյա խաղեր 
           </h1>
-          <h2 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-purple-300 to-pink-300 drop-shadow-2xl">
-            Խաղեր
-          </h2>
           
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
