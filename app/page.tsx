@@ -144,7 +144,7 @@ const NewYearLanding = () => {
     </Button>
 
     <Button
-      onClick={() => router.push("/new-year")}
+      onClick={() => router.push("/truth-or-dare")}
       className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-2xl"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>

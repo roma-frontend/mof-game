@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Users, Zap, Heart, Flame, Trophy, Star, Gift, Sparkles, TrendingUp, RotateCcw, Play, Plus, X, Award, Target, Crown, PartyPopper, Volume2, VolumeX } from 'lucide-react';
+import { Users, Zap, Heart, Flame, Trophy, Star, Gift, Sparkles, TrendingUp, RotateCcw, Play, Plus, X, Award, Target, Crown, PartyPopper, Volume2, VolumeX, Clock, Timer } from 'lucide-react';
 import { useRouter } from 'next/navigation'
 
 interface Player {
@@ -32,6 +32,11 @@ interface GameStats {
   mvpPlayer: Player | null;
 }
 
+interface TournamentSettings {
+  duration: number;
+  enabled: boolean;
+}
+
 const TruthOrDareGame = () => {
   const router = useRouter();
   const [gameState, setGameState] = useState<'intro' | 'setup' | 'playing' | 'challenge' | 'stats'>('intro');
@@ -52,12 +57,21 @@ const TruthOrDareGame = () => {
   });
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isDrumRoll, setIsDrumRoll] = useState(false);
+  const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings>({
+    duration: 10,
+    enabled: false
+  });
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [tournamentWinner, setTournamentWinner] = useState<Player | null>(null);
+  const [loserForPunishment, setLoserForPunishment] = useState<Player | null>(null);
   
   const startTimeRef = useRef<number>(0);
   const drumRollRef = useRef<any>(null);
+  const timerIntervalRef = useRef<any>(null);
 
   const avatars = ['🎅', '🤶', '🧝', '⛄', '🦌', '🎄', '⭐', '🎁', '❄️', '🔔', '🕯️', '🎊'];
   
+  // ВАШ МАССИВ CHALLENGES ЗДЕСЬ
   const challenges: Challenge[] = [
     // ПРАВДА - Смешные
     { id: 1, type: 'truth', category: 'funny', text: 'Ո՞րն է ամենաշռայլ բանը, որ դու արել ես այս տարի:', points: 10 },
@@ -136,7 +150,58 @@ const TruthOrDareGame = () => {
     creative: { bg: 'from-blue-400 to-cyan-500', text: 'text-blue-700', icon: '🎨' }
   };
 
-  // Звуковые эффекты
+  // Желания для победителя (можно изменить)
+  const winnerPunishments = [
+    'Спой караоке песню на выбор победителя',
+    'Станцуй танец живота 1 минуту',
+    'Сделай массаж плеч победителю 5 минут',
+    'Принеси победителю любимый напиток и закуску',
+    'Расскажи самую смешную историю из своей жизни',
+    'Сделай 30 приседаний прямо сейчас',
+    'Говори комплименты победителю 2 минуты без остановки',
+    'Изобрази 5 известных людей, пока победитель не угадает',
+    'Станцуй под песню которую выберет победитель',
+    'Приготовь коктейль/напиток для победителя',
+    'Сделай селфи в смешной позе и поставь на аватар на 24 часа',
+    'Расскажи стих или спой песню стоя на одной ноге',
+    'Изобрази животное которое выберет победитель',
+    'Говори весь вечер только комплиментами о победителе',
+    'Сделай смешную пародию на победителя',
+    'Исполни любое разумное желание победителя',
+    'Танцуй каждый раз когда победитель скажет "танцуй" в течение часа',
+    'Расскажи 3 секрета о себе',
+    'Сыграй роль слуги победителя 30 минут',
+    'Спой новогоднюю песню с танцем'
+  ];
+
+  // Таймер для турнирного режима
+  useEffect(() => {
+    if (gameState === 'playing' && tournamentSettings.enabled && timeRemaining > 0) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timerIntervalRef.current);
+            endTournament();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+        }
+      };
+    }
+  }, [gameState, tournamentSettings.enabled, timeRemaining]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const playSound = (type: 'spin' | 'click' | 'win' | 'drumroll' | 'complete') => {
     if (!soundEnabled) return;
     
@@ -156,7 +221,6 @@ const TruthOrDareGame = () => {
         oscillator.stop(audioContext.currentTime + 2);
         break;
       case 'drumroll':
-        // Барабанная дробь
         for (let i = 0; i < 20; i++) {
           setTimeout(() => {
             const osc = audioContext.createOscillator();
@@ -221,6 +285,11 @@ const TruthOrDareGame = () => {
     if (players.length >= 2) {
       setGameState('playing');
       startTimeRef.current = Date.now();
+      
+      if (tournamentSettings.enabled) {
+        setTimeRemaining(tournamentSettings.duration * 60);
+      }
+      
       playSound('win');
     }
   };
@@ -314,14 +383,26 @@ const TruthOrDareGame = () => {
     playSound('click');
   };
 
-  const endGame = () => {
+  const endTournament = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+
     const totalTime = (Date.now() - startTimeRef.current) / 1000;
-    const mvp = [...players].sort((a, b) => b.totalScore - a.totalScore)[0];
+    const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
+    const winner = sortedPlayers[0];
+    
+    // Выбираем случайного проигравшего (не победителя)
+    const losers = sortedPlayers.slice(1);
+    const randomLoser = losers[Math.floor(Math.random() * losers.length)];
+    
+    setTournamentWinner(winner);
+    setLoserForPunishment(randomLoser);
     
     setGameStats(prev => ({
       ...prev,
       totalTime,
-      mvpPlayer: mvp
+      mvpPlayer: winner
     }));
     
     setGameState('stats');
@@ -329,7 +410,30 @@ const TruthOrDareGame = () => {
     playSound('win');
   };
 
+  const endGame = () => {
+    if (tournamentSettings.enabled) {
+      endTournament();
+    } else {
+      const totalTime = (Date.now() - startTimeRef.current) / 1000;
+      const mvp = [...players].sort((a, b) => b.totalScore - a.totalScore)[0];
+      
+      setGameStats(prev => ({
+        ...prev,
+        totalTime,
+        mvpPlayer: mvp
+      }));
+      
+      setGameState('stats');
+      setShowConfetti(true);
+      playSound('win');
+    }
+  };
+
   const resetGame = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+    
     setGameState('setup');
     setPlayers(players.map(p => ({
       ...p,
@@ -341,6 +445,9 @@ const TruthOrDareGame = () => {
     setCurrentPlayer(null);
     setCurrentChallenge(null);
     setSelectedType(null);
+    setTimeRemaining(0);
+    setTournamentWinner(null);
+    setLoserForPunishment(null);
     setGameStats({
       totalChallenges: 0,
       totalTruths: 0,
@@ -413,12 +520,12 @@ const TruthOrDareGame = () => {
               <p className="text-white font-bold text-lg">50+ Մարտահրավերներ</p>
             </Card>
             <Card className="p-6 bg-white/10 backdrop-blur-xl border-2 border-white/20 hover:bg-white/20 transition-all transform hover:scale-110">
-              <Heart className="w-16 h-16 mx-auto mb-3 text-pink-300" />
-              <p className="text-white font-bold text-lg">Ռոմանտիկ Պահեր</p>
+              <Trophy className="w-16 h-16 mx-auto mb-3 text-amber-300" />
+              <p className="text-white font-bold text-lg">Турнирный Режим</p>
             </Card>
             <Card className="p-6 bg-white/10 backdrop-blur-xl border-2 border-white/20 hover:bg-white/20 transition-all transform hover:scale-110">
-              <Trophy className="w-16 h-16 mx-auto mb-3 text-amber-300" />
-              <p className="text-white font-bold text-lg">Վիճակագրություն</p>
+              <Heart className="w-16 h-16 mx-auto mb-3 text-pink-300" />
+              <p className="text-white font-bold text-lg">Ռոմանտիկ Պահեր</p>
             </Card>
           </div>
           
@@ -473,6 +580,64 @@ const TruthOrDareGame = () => {
               {soundEnabled ? <Volume2 className="w-8 h-8 text-white" /> : <VolumeX className="w-8 h-8 text-white" />}
             </button>
           </div>
+
+          {/* Турнирные настройки */}
+          <Card className="p-8 bg-white/10 backdrop-blur-xl border-2 border-white/20 mb-8">
+            <div className="flex items-center gap-4 mb-6">
+              <Trophy className="w-10 h-10 text-yellow-300" />
+              <h2 className="text-3xl font-black text-white">Турнирный Режим</h2>
+            </div>
+            
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <label className="text-xl text-white font-bold">Включить турнир:</label>
+                <button
+                  onClick={() => setTournamentSettings(prev => ({ ...prev, enabled: !prev.enabled }))}
+                  className={`px-8 py-3 rounded-xl font-bold text-xl transition-all ${
+                    tournamentSettings.enabled 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                      : 'bg-white/20'
+                  } text-white`}
+                >
+                  {tournamentSettings.enabled ? '✓ Включен' : 'Выключен'}
+                </button>
+              </div>
+            </div>
+
+            {tournamentSettings.enabled && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xl text-white font-bold mb-3 block">
+                    <Clock className="inline w-6 h-6 mr-2" />
+                    Длительность турнира: {tournamentSettings.duration} минут
+                  </label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="30"
+                    step="5"
+                    value={tournamentSettings.duration}
+                    onChange={(e) => setTournamentSettings(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                    className="w-full h-3 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-white/60 text-sm mt-2">
+                    <span>5 мин</span>
+                    <span>15 мин</span>
+                    <span>30 мин</span>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-yellow-500/20 rounded-xl border-2 border-yellow-500/50">
+                  <p className="text-white text-lg">
+                    ⏱️ Игра автоматически завершится через {tournamentSettings.duration} минут
+                  </p>
+                  <p className="text-white/80 text-sm mt-2">
+                    🏆 Победитель выберет проигравшего для выполнения желания
+                  </p>
+                </div>
+              </div>
+            )}
+          </Card>
 
           <Card className="p-8 bg-white/10 backdrop-blur-xl border-2 border-white/20 mb-8">
             <div className="flex items-center gap-4 mb-6">
@@ -536,7 +701,8 @@ const TruthOrDareGame = () => {
               disabled={players.length < 2}
               className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 hover:from-yellow-500 hover:via-pink-600 hover:to-purple-700 px-16 py-6 text-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl"
             >
-              <Play className="mr-3 w-8 h-8" /> Սկսել Խաղը ({players.length} խաղացող)
+              <Play className="mr-3 w-8 h-8" /> 
+              {tournamentSettings.enabled ? `Սկսել Турнир (${tournamentSettings.duration} мин)` : `Սկսել Խաղը (${players.length} խաղացող)`}
             </Button>
           </div>
         </div>
@@ -550,13 +716,20 @@ const TruthOrDareGame = () => {
         <Confetti />
         
         <div className="max-w-7xl mx-auto">
-          {/* Заголовок */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-5xl font-black text-white drop-shadow-lg">🎯 Правда или Действие</h1>
               <p className="text-xl text-white/70 mt-2">Ամանորյա Մարտահրավերներ</p>
             </div>
             <div className="flex items-center gap-4">
+              {tournamentSettings.enabled && (
+                <div className={`px-8 py-4 rounded-xl font-black text-3xl ${
+                  timeRemaining <= 60 ? 'bg-red-500 animate-pulse' : 'bg-white/10 backdrop-blur-xl'
+                } text-white`}>
+                  <Timer className="inline w-8 h-8 mr-2" />
+                  {formatTime(timeRemaining)}
+                </div>
+              )}
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 className="p-4 bg-white/10 backdrop-blur-xl rounded-full hover:bg-white/20 transition-all"
@@ -572,9 +745,7 @@ const TruthOrDareGame = () => {
             </div>
           </div>
 
-          {/* Игровая таблица */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Левая колонка - игроки */}
             <div className="lg:col-span-1">
               <Card className="p-6 bg-white/10 backdrop-blur-xl border-2 border-white/20 h-full">
                 <div className="flex items-center gap-3 mb-6">
@@ -639,7 +810,6 @@ const TruthOrDareGame = () => {
               </Card>
             </div>
 
-            {/* Центральная колонка - колесо */}
             <div className="lg:col-span-2">
               <Card className="p-8 bg-white/10 backdrop-blur-xl border-2 border-white/20">
                 {!currentPlayer ? (
@@ -685,7 +855,6 @@ const TruthOrDareGame = () => {
                       <p className="text-2xl text-white/70">Պտտեք անիվը!</p>
                     </div>
 
-                    {/* Колесо фортуны */}
                     <div className="relative w-80 h-80 mx-auto mb-8">
                       <div 
                         className={`w-full h-full rounded-full border-8 border-white/30 shadow-2xl relative overflow-hidden transition-transform duration-3000 ease-out ${
@@ -693,27 +862,23 @@ const TruthOrDareGame = () => {
                         }`}
                         style={{ transform: `rotate(${wheelRotation}deg)` }}
                       >
-                        {/* Половина "Правда" */}
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-600" style={{ clipPath: 'polygon(50% 50%, 0% 0%, 100% 0%, 100% 50%)' }}>
                           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 text-white font-black text-3xl transform -rotate-45">
                             💬 ПРАВДА
                           </div>
                         </div>
                         
-                        {/* Половина "Действие" */}
                         <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-600" style={{ clipPath: 'polygon(50% 50%, 0% 100%, 100% 100%, 100% 50%)' }}>
                           <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 text-white font-black text-3xl transform rotate-45">
                             🔥 ДЕЙСТВИЕ
                           </div>
                         </div>
 
-                        {/* Центр */}
                         <div className="absolute top-1/2 left-1/2 w-20 h-20 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center">
                           <Zap className="w-10 h-10 text-yellow-500" />
                         </div>
                       </div>
 
-                      {/* Указатель */}
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10">
                         <div className="w-0 h-0 border-l-8 border-r-8 border-t-12 border-l-transparent border-r-transparent border-t-yellow-400 drop-shadow-2xl" />
                       </div>
@@ -751,7 +916,6 @@ const TruthOrDareGame = () => {
                 )}
               </Card>
 
-              {/* Статистика игры */}
               <Card className="mt-6 p-6 bg-white/10 backdrop-blur-xl border-2 border-white/20">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
@@ -789,7 +953,6 @@ const TruthOrDareGame = () => {
         
         <div className="max-w-4xl w-full">
           <Card className={`p-12 bg-gradient-to-br ${categoryColor.bg} border-4 border-white/30 shadow-2xl transform animate-scale-in`}>
-            {/* Заголовок */}
             <div className="text-center mb-8">
               <div className="text-8xl mb-4 animate-bounce">{currentPlayer.avatar}</div>
               <h2 className="text-4xl font-black text-white mb-2">{currentPlayer.name}</h2>
@@ -803,14 +966,12 @@ const TruthOrDareGame = () => {
               </div>
             </div>
 
-            {/* Вызов */}
             <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 mb-8 border-4 border-white/30">
               <p className="text-4xl font-bold text-white text-center leading-relaxed">
                 {currentChallenge.text}
               </p>
             </div>
 
-            {/* Очки */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-3 px-8 py-4 bg-yellow-400 rounded-full">
                 <Star className="w-10 h-10 text-yellow-900" />
@@ -819,7 +980,6 @@ const TruthOrDareGame = () => {
               </div>
             </div>
 
-            {/* Кнопки */}
             <div className="flex gap-6 justify-center">
               <Button
                 onClick={() => completeChallenge(true)}
@@ -842,19 +1002,21 @@ const TruthOrDareGame = () => {
   }
 
   if (gameState === 'stats') {
+    const randomPunishment = winnerPunishments[Math.floor(Math.random() * winnerPunishments.length)];
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8">
         <Confetti />
         
         <div className="max-w-6xl mx-auto">
-          {/* Заголовок */}
           <div className="text-center mb-12">
             <Trophy className="w-32 h-32 mx-auto mb-6 text-yellow-300 animate-bounce" />
-            <h1 className="text-7xl font-black text-white mb-4 drop-shadow-2xl">Խաղն Ավարտվեց!</h1>
+            <h1 className="text-7xl font-black text-white mb-4 drop-shadow-2xl">
+              {tournamentSettings.enabled ? 'Турнир Завершен!' : 'Խաղն Ավարտվեց!'}
+            </h1>
             <p className="text-3xl text-white/70">🎊 Ստատիստիկա և Հաղթողներ 🎊</p>
           </div>
 
-          {/* MVP */}
           {gameStats.mvpPlayer && (
             <Card className="p-12 mb-8 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 border-4 border-yellow-300 shadow-2xl">
               <div className="text-center">
@@ -880,7 +1042,31 @@ const TruthOrDareGame = () => {
             </Card>
           )}
 
-          {/* Общая статистика */}
+          {tournamentSettings.enabled && loserForPunishment && (
+            <Card className="p-12 mb-8 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 border-4 border-purple-300 shadow-2xl animate-pulse">
+              <div className="text-center">
+                <Gift className="w-24 h-24 mx-auto mb-6 text-white animate-bounce" />
+                <h2 className="text-5xl font-black text-white mb-6">🎁 Желание Победителя 🎁</h2>
+                
+                <div className="mb-8">
+                  <p className="text-3xl text-white mb-4">Проигравший:</p>
+                  <div className="text-8xl mb-2">{loserForPunishment.avatar}</div>
+                  <h3 className="text-5xl font-black text-white">{loserForPunishment.name}</h3>
+                </div>
+                
+                <div className="bg-white/20 backdrop-blur-xl rounded-3xl p-10 border-4 border-white/30">
+                  <p className="text-4xl font-bold text-white leading-relaxed">
+                    {randomPunishment}
+                  </p>
+                </div>
+                
+                <p className="text-2xl text-white/80 mt-6">
+                  Выполни это задание для победителя! 🎯
+                </p>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-8 mb-8 bg-white/10 backdrop-blur-xl border-2 border-white/20">
             <h2 className="text-4xl font-black text-white mb-6 flex items-center gap-3">
               <TrendingUp className="w-10 h-10 text-green-400" />
@@ -910,7 +1096,6 @@ const TruthOrDareGame = () => {
             </div>
           </Card>
 
-          {/* Таблица лидеров */}
           <Card className="p-8 mb-8 bg-white/10 backdrop-blur-xl border-2 border-white/20">
             <h2 className="text-4xl font-black text-white mb-6 flex items-center gap-3">
               <Trophy className="w-10 h-10 text-yellow-400" />
@@ -975,7 +1160,6 @@ const TruthOrDareGame = () => {
             </div>
           </Card>
 
-          {/* Кнопки */}
           <div className="flex gap-6 justify-center">
             <Button
               onClick={resetGame}
