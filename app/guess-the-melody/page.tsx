@@ -55,6 +55,7 @@ const GuessTheMelody = () => {
   const [showStats, setShowStats] = useState(false);
   const [songRevealed, setSongRevealed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [shuffledSongs, setShuffledSongs] = useState<Song[]>([]);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,6 +95,15 @@ const GuessTheMelody = () => {
     easy: { base: 3, fast: 5, perfect: 8 },
     medium: { base: 5, fast: 8, perfect: 12 },
     hard: { base: 8, fast: 12, perfect: 15 }
+  };
+
+  const shuffleSongs = (songsArray: Song[]) => {
+    const shuffled = [...songsArray];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   };
 
   useEffect(() => {
@@ -169,13 +179,16 @@ const GuessTheMelody = () => {
 
   const startGame = () => {
     if (players.length >= 2) {
+      const shuffled = shuffleSongs(songs);
+      setShuffledSongs(shuffled);
+      setCurrentSongIndex(0);
       setGameState('playing');
       setIsPlaying(true);
       setSongRevealed(false);
       startTimeRef.current = Date.now();
       
       if (audioRef.current) {
-        audioRef.current.src = songs[currentSongIndex].file;
+        audioRef.current.src = shuffled[0].file;
         audioRef.current.volume = volume;
         
         const playPromise = audioRef.current.play();
@@ -209,7 +222,7 @@ const GuessTheMelody = () => {
   };
 
   const addPoints = (playerId: string, difficulty: 'base' | 'fast' | 'perfect') => {
-    const currentSong = songs[currentSongIndex];
+    const currentSong = shuffledSongs[currentSongIndex];
     const basePoints = difficultyPoints[currentSong.difficulty][difficulty];
     const responseTime = 45 - timeLeft;
     
@@ -260,7 +273,7 @@ const GuessTheMelody = () => {
     setPowerUpActive(false);
     setSongRevealed(false);
     
-    if (currentSongIndex < songs.length - 1) {
+    if (currentSongIndex < shuffledSongs.length - 1) {
       setCurrentSongIndex(currentSongIndex + 1);
       setTimeLeft(45);
       setGameState('playing');
@@ -268,7 +281,7 @@ const GuessTheMelody = () => {
       setGameStats(prev => ({ ...prev, songsPlayed: prev.songsPlayed + 1 }));
       
       if (audioRef.current) {
-        audioRef.current.src = songs[currentSongIndex + 1].file;
+        audioRef.current.src = shuffledSongs[currentSongIndex + 1].file;
         audioRef.current.play().catch(e => console.log('Audio play failed:', e));
       }
     } else {
@@ -427,6 +440,25 @@ const GuessTheMelody = () => {
             <Play className="mr-4 w-12 h-12" /> Սկսել
           </Button>
         </div>
+        <div className="fixed left-[2rem] top-[2rem]">
+          <button
+            onClick={() => router.push("/")}
+            className="group relative flex px-8 py-4 text-xl font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl h-[3rem] bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white"
+          >
+            <span className="relative z-10 flex items-center gap-3">
+              <svg 
+                className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform duration-300" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Գլխավոր էջ
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </span>
+          </button>
+        </div>
       </div>
     );
   }
@@ -529,7 +561,7 @@ const GuessTheMelody = () => {
   }
 
   if (gameState === 'playing') {
-    const currentSong = songs[currentSongIndex];
+    const currentSong = shuffledSongs[currentSongIndex];
     const progressPercent = (timeLeft / 45) * 100;
 
     return (
@@ -569,7 +601,7 @@ const GuessTheMelody = () => {
             <div className="flex items-center gap-4">
               <div className="bg-white/10 backdrop-blur-xl px-8 py-4 rounded-full border-2 border-white/20">
                 <span className="text-2xl font-black text-white">
-                  Երգ {currentSongIndex + 1} / {songs.length}
+                  Երգ {currentSongIndex + 1} / {shuffledSongs.length}
                 </span>
               </div>
               
@@ -600,7 +632,7 @@ const GuessTheMelody = () => {
                   <Music className="w-8 h-8 text-yellow-300 animate-bounce" />
                   {songRevealed ? (
                     <span className="text-3xl font-black text-white">
-                      {currentSong.title} - {currentSong.artist}
+                      {shuffledSongs[currentSongIndex].title} - {shuffledSongs[currentSongIndex].artist}
                     </span>
                   ) : (
                     <span className="text-3xl font-black text-white">
@@ -807,6 +839,7 @@ const GuessTheMelody = () => {
   }
 
   if (gameState === 'round-end') {
+    if (shuffledSongs.length === 0) return null;
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-900 via-cyan-900 to-blue-900 p-8 flex items-center justify-center">
         {roundWinner && <Confetti />}
@@ -823,8 +856,8 @@ const GuessTheMelody = () => {
                 <div className="bg-blue-500/20 px-6 py-4 rounded-xl mb-6">
                   <Music className="w-8 h-8 mx-auto mb-2 text-blue-300" />
                   <p className="text-2xl font-bold text-white">
-                    {songs[currentSongIndex].title} - {songs[currentSongIndex].artist}
-                  </p>
+  {shuffledSongs[currentSongIndex].title} - {shuffledSongs[currentSongIndex].artist}
+</p>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-6 mb-8">
@@ -854,8 +887,8 @@ const GuessTheMelody = () => {
                 <div className="bg-blue-500/20 px-6 py-4 rounded-xl mb-8">
                   <Music className="w-8 h-8 mx-auto mb-2 text-blue-300" />
                   <p className="text-2xl font-bold text-white">
-                    Պատասխանը: {songs[currentSongIndex].title} - {songs[currentSongIndex].artist}
-                  </p>
+  Պատասխանը: {shuffledSongs[currentSongIndex].title} - {shuffledSongs[currentSongIndex].artist}
+</p>
                 </div>
               </>
             )}
