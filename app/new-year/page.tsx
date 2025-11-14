@@ -779,7 +779,7 @@ export default function NewYearGames() {
             <Sparkles className="text-amber-500" />
           </div>
           <p className="text-xl text-slate-700 font-bold">
-            Շնորհավոր Նոր Տարի և Սուրբ Ծնունդ! 🎄🎉
+            Շնորհավոր Ամանոր և Սուրբ Ծնունդ! 🎄🎉
           </p>
         </div>
 

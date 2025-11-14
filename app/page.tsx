@@ -185,7 +185,7 @@ const NewYearLanding = () => {
         {/* Bottom decorative text */}
         <div className="mt-20 text-center">
           <p className="text-4xl font-bold text-white/40 animate-pulse">
-            🎄 Շնորհավոր Նոր Տարի և Սուրբ Ծնունդ 🎄
+            🎄 Շնորհավոր Ամանոր և Սուրբ Ծնունդ 🎄
           </p>
         </div>
       </div>
