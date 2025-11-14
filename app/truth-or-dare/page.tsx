@@ -55,6 +55,7 @@ const TruthOrDareGame = () => {
     totalTime: 0,
     mvpPlayer: null
   });
+  
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isDrumRoll, setIsDrumRoll] = useState(false);
   const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings>({
