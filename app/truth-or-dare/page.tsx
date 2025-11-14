@@ -856,33 +856,99 @@ const TruthOrDareGame = () => {
                     </div>
 
                     <div className="relative w-80 h-80 mx-auto mb-8">
-                      <div 
-                        className={`w-full h-full rounded-full border-8 border-white/30 shadow-2xl relative overflow-hidden transition-transform duration-3000 ease-out ${
-                          isSpinning ? 'animate-spin-slow' : ''
-                        }`}
-                        style={{ transform: `rotate(${wheelRotation}deg)` }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-600" style={{ clipPath: 'polygon(50% 50%, 0% 0%, 100% 0%, 100% 50%)' }}>
-                          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 text-white font-black text-3xl transform -rotate-45">
-                            💬 ПРАВДА
-                          </div>
-                        </div>
-                        
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-600" style={{ clipPath: 'polygon(50% 50%, 0% 100%, 100% 100%, 100% 50%)' }}>
-                          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 text-white font-black text-3xl transform rotate-45">
-                            🔥 ДЕЙСТВИЕ
-                          </div>
-                        </div>
+  {/* Неоновое свечение */}
+  <div className="absolute inset-0 rounded-full blur-3xl opacity-60"
+       style={{ 
+         background: isSpinning 
+           ? 'conic-gradient(from 0deg, #00f, #f0f, #f00, #ff0, #0ff, #00f)' 
+           : 'radial-gradient(circle, rgba(255,0,255,0.4), transparent)'
+       }} />
+  
+  <div 
+    className={`relative w-full h-full rounded-full border-8 shadow-2xl transition-transform duration-3000 ease-out ${
+      isSpinning ? 'animate-spin-slow' : ''
+    }`}
+    style={{ 
+      transform: `rotate(${wheelRotation}deg)`,
+      borderColor: '#fff',
+      boxShadow: '0 0 40px rgba(255,255,255,0.5), inset 0 0 60px rgba(255,255,255,0.2)'
+    }}
+  >
+    {/* Внутренний градиент */}
+    <div className="absolute inset-0 rounded-full overflow-hidden"
+         style={{ background: 'conic-gradient(from 0deg, #06b6d4 0deg 180deg, #f97316 180deg 360deg)' }}>
+      
+      {/* Текст и иконки ПРАВДА */}
+      <div className="absolute top-[25%] left-1/2 -translate-x-1/2 text-center transform -rotate-45">
+        <div className="relative">
+          <div className="text-6xl mb-3 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.9)]">💬</div>
+          <div className="text-white font-black text-3xl tracking-wider"
+               style={{ 
+                 textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(6,182,212,0.6)',
+                 fontFamily: 'Impact, sans-serif'
+               }}>
+            ПРАВДА
+          </div>
+        </div>
+      </div>
+      
+      {/* Текст и иконки ДЕЙСТВИЕ */}
+      <div className="absolute bottom-[25%] left-1/2 -translate-x-1/2 text-center transform rotate-45">
+        <div className="relative">
+          <div className="text-6xl mb-3 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.9)]">🔥</div>
+          <div className="text-white font-black text-3xl tracking-wider"
+               style={{ 
+                 textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(249,115,22,0.6)',
+                 fontFamily: 'Impact, sans-serif'
+               }}>
+            ДЕЙСТВИЕ
+          </div>
+        </div>
+      </div>
 
-                        <div className="absolute top-1/2 left-1/2 w-20 h-20 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center">
-                          <Zap className="w-10 h-10 text-yellow-500" />
-                        </div>
-                      </div>
+      {/* Сегменты с границами */}
+      <div className="absolute inset-0">
+        {[0, 90, 180, 270].map((angle) => (
+          <div
+            key={angle}
+            className="absolute top-1/2 left-1/2 w-full h-0.5 bg-white/40 origin-left"
+            style={{ transform: `translate(-50%, -50%) rotate(${angle}deg)` }}
+          />
+        ))}
+      </div>
+    </div>
 
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10">
-                        <div className="w-0 h-0 border-l-8 border-r-8 border-t-12 border-l-transparent border-r-transparent border-t-yellow-400 drop-shadow-2xl" />
-                      </div>
-                    </div>
+    {/* Центральная кнопка */}
+    <div className="absolute top-1/2 left-1/2 w-28 h-28 -translate-x-1/2 -translate-y-1/2 z-10">
+      <div className="w-full h-full rounded-full flex items-center justify-center relative"
+           style={{ 
+             background: 'radial-gradient(circle at 30% 30%, #fbbf24, #f59e0b, #d97706)',
+             boxShadow: '0 0 30px rgba(251,191,36,0.8), inset 0 -4px 20px rgba(0,0,0,0.3), inset 0 4px 10px rgba(255,255,255,0.5)'
+           }}>
+        <Zap className="w-14 h-14 text-white drop-shadow-lg animate-pulse" 
+             style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.8))' }} />
+        {/* Кольца внутри */}
+        <div className="absolute inset-2 rounded-full border-4 border-white/30" />
+        <div className="absolute inset-4 rounded-full border-2 border-white/20" />
+      </div>
+    </div>
+  </div>
+
+  {/* Улучшенная стрелка */}
+  <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-20">
+    <div className="relative animate-bounce">
+      <div className="absolute -inset-4 blur-xl bg-yellow-400/60 rounded-full" />
+      <div className="relative">
+        <div className="w-0 h-0 border-l-[24px] border-r-[24px] border-t-[36px] border-l-transparent border-r-transparent"
+             style={{ 
+               borderTopColor: '#fbbf24',
+               filter: 'drop-shadow(0 6px 12px rgba(251,191,36,0.9))'
+             }} />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-8 bg-gradient-to-b from-yellow-300 to-transparent" />
+      </div>
+    </div>
+  </div>
+</div>
 
                     {selectedType && !isSpinning && (
                       <div className="mb-6 p-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl animate-pulse">
