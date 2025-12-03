@@ -1,103 +1,539 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { Timer, Users, Trophy, Sparkles, Zap, Clock, Star, Play, Pause, RotateCcw, Settings, TrendingUp, Award, Target, Flame, Shield, Gift, Music, Mic, Volume2, Eye, EyeOff, ChevronRight, Plus, Minus, Check, X, Crown, Rocket, Heart, Brain, Coffee, BookOpen, Lightbulb, Siren, PartyPopper, Snowflake } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Timer, Users, Trophy, Sparkles, Zap, Clock, Star, Play, Pause, RotateCcw, Settings, TrendingUp, Award, Target, Flame, Shield, Gift, Music, Mic, Volume2, VolumeX, Eye, EyeOff, ChevronRight, Plus, Minus, Check, X, Crown, Rocket, Heart, Brain, Coffee, BookOpen, Lightbulb, Siren, PartyPopper, Snowflake, Volume, Bell, AlertCircle, BrainCircuit, LightbulbOff, Moon, Sun, CloudRain, Wind, BrickWallFire, User, UserPlus, UserMinus, Edit, Trash2, Save, Mail, Phone, Briefcase, MapPin, Calendar } from 'lucide-react';
+import useSound from 'use-sound';
+
+// Типы для игры
+type GameState = 'menu' | 'setup' | 'teamSetup' | 'playerSetup' | 'ready' | 'playing' | 'results';
+type Difficulty = 'easy' | 'medium' | 'hard' | 'expert' | 'insane';
+type GameMode = 'classic' | 'tournament' | 'survival' | 'blitz' | 'cooperation';
+type Theme = 'night' | 'aurora' | 'fire' | 'ocean';
+type Mood = 'neutral' | 'happy' | 'sad';
+type SpecialCardType = 'joker' | 'freeze' | 'double' | 'swap' | 'shield' | 'bomb' | 'vision' | 'bonus' | 'timeWarp' | 'mindReader';
+
+interface Player {
+    id: string;
+    name: string;
+    avatar: string;
+    department: string;
+    position: string;
+    email: string;
+    phone: string;
+    experience: number; // 1-5
+    isActive: boolean;
+    stats: {
+        gamesPlayed: number;
+        gamesWon: number;
+        totalPoints: number;
+        accuracy: number;
+        favoriteCategory: string;
+    };
+}
+
+interface Category {
+    name: string;
+    emoji: string;
+    color: string;
+    icon: React.ReactNode;
+    difficulty: number;
+    description: string;
+}
+
+interface DifficultySetting {
+    time: number;
+    points: number;
+    label: string;
+    color: string;
+    icon: string;
+    multiplier: number;
+    description: string;
+}
+
+interface GameModeInfo {
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+    color: string;
+    features: string[];
+}
+
+interface SpecialCard {
+    type: SpecialCardType;
+    name: string;
+    emoji: string;
+    description: string;
+    color: string;
+    effect: string;
+}
+
+interface Team {
+    id: string;
+    name: string;
+    color: string;
+    emoji: string;
+    players: Player[];
+    captain: Player;
+    score: number;
+    specialCards: Record<SpecialCardType, number>;
+    correctGuesses: number;
+    skippedWords: number;
+    fastestTime: number | null;
+    streak: number;
+    maxStreak: number;
+    lives: number;
+    efficiency: number;
+    lastAction: { type: string; points?: number; time: number } | null;
+    department: string;
+}
+
+interface Card {
+    word: string;
+    category: string;
+    categoryInfo: Category;
+    difficulty: number;
+    aiHint: string[];
+}
+
+interface HistoryItem {
+    team: string;
+    word: string;
+    time: number;
+    points: number;
+    round: number;
+    difficulty: number;
+    multiplier: string;
+}
+
+interface Stats {
+    fastestGuess: { team: string; time: number; word: string; points?: number } | null;
+    bestPlayer: string | null;
+    slowestGuess: { team: string; time: number; word: string } | null;
+    totalWords: number;
+    skippedWords: number;
+    history: HistoryItem[];
+    avgTime: number;
+}
+
+interface Achievement {
+    name: string;
+    emoji: string;
+    description: string;
+    points: number;
+}
+
+interface Particle {
+    id: number;
+    type: string;
+    x: number;
+    y: number;
+    size: number;
+    speed: number;
+    opacity: number;
+}
+
+// Предзагруженные данные сотрудников офиса
+const predefinedPlayers: Player[] = [
+    {
+        id: '1',
+        name: 'Արամ Մկրտչյան',
+        avatar: '👨‍💼',
+        department: 'Ծրագրավորում',
+        position: 'Senior Developer',
+        email: 'aram@company.com',
+        phone: '+374 77 123456',
+        experience: 5,
+        isActive: true,
+        stats: {
+            gamesPlayed: 12,
+            gamesWon: 8,
+            totalPoints: 1450,
+            accuracy: 87,
+            favoriteCategory: 'science'
+        }
+    },
+    {
+        id: '2',
+        name: 'Անի Պետրոսյան',
+        avatar: '👩‍🎨',
+        department: 'Նախագծում',
+        position: 'UI/UX Designer',
+        email: 'ani@company.com',
+        phone: '+374 77 234567',
+        experience: 4,
+        isActive: true,
+        stats: {
+            gamesPlayed: 15,
+            gamesWon: 10,
+            totalPoints: 1780,
+            accuracy: 92,
+            favoriteCategory: 'emotions'
+        }
+    },
+    {
+        id: '3',
+        name: 'Տիգրան Գրիգորյան',
+        avatar: '👨‍💻',
+        department: 'Ծրագրավորում',
+        position: 'Full Stack Developer',
+        email: 'tigran@company.com',
+        phone: '+374 77 345678',
+        experience: 3,
+        isActive: true,
+        stats: {
+            gamesPlayed: 8,
+            gamesWon: 5,
+            totalPoints: 920,
+            accuracy: 76,
+            favoriteCategory: 'movies'
+        }
+    },
+    {
+        id: '4',
+        name: 'Լիլիթ Սարգսյան',
+        avatar: '👩‍💼',
+        department: 'Վաճառք',
+        position: 'Sales Manager',
+        email: 'lilit@company.com',
+        phone: '+374 77 456789',
+        experience: 4,
+        isActive: true,
+        stats: {
+            gamesPlayed: 10,
+            gamesWon: 6,
+            totalPoints: 1100,
+            accuracy: 81,
+            favoriteCategory: 'celebrities'
+        }
+    },
+    {
+        id: '5',
+        name: 'Արթուր Դավթյան',
+        avatar: '👨‍🔧',
+        department: 'IT Աջակցում',
+        position: 'System Administrator',
+        email: 'artur@company.com',
+        phone: '+374 77 567890',
+        experience: 5,
+        isActive: true,
+        stats: {
+            gamesPlayed: 20,
+            gamesWon: 15,
+            totalPoints: 2450,
+            accuracy: 94,
+            favoriteCategory: 'science'
+        }
+    },
+    {
+        id: '6',
+        name: 'Մարինե Կարապետյան',
+        avatar: '👩‍🏫',
+        department: 'Մարքեթինգ',
+        position: 'Marketing Specialist',
+        email: 'marine@company.com',
+        phone: '+374 77 678901',
+        experience: 3,
+        isActive: true,
+        stats: {
+            gamesPlayed: 7,
+            gamesWon: 4,
+            totalPoints: 780,
+            accuracy: 72,
+            favoriteCategory: 'traditions'
+        }
+    },
+    {
+        id: '7',
+        name: 'Հակոբ Ավետիսյան',
+        avatar: '👨‍🎓',
+        department: 'Վերլուծություն',
+        position: 'Data Analyst',
+        email: 'hakob@company.com',
+        phone: '+374 77 789012',
+        experience: 4,
+        isActive: true,
+        stats: {
+            gamesPlayed: 9,
+            gamesWon: 5,
+            totalPoints: 980,
+            accuracy: 79,
+            favoriteCategory: 'science'
+        }
+    },
+    {
+        id: '8',
+        name: 'Նարե Մովսիսյան',
+        avatar: '👩‍💻',
+        department: 'Ծրագրավորում',
+        position: 'Frontend Developer',
+        email: 'nare@company.com',
+        phone: '+374 77 890123',
+        experience: 2,
+        isActive: true,
+        stats: {
+            gamesPlayed: 5,
+            gamesWon: 2,
+            totalPoints: 520,
+            accuracy: 68,
+            favoriteCategory: 'actions'
+        }
+    },
+    {
+        id: '9',
+        name: 'Գագիկ Մարտիրոսյան',
+        avatar: '👨‍🔬',
+        department: 'Որակի ապահովում',
+        position: 'QA Engineer',
+        email: 'gagik@company.com',
+        phone: '+374 77 901234',
+        experience: 3,
+        isActive: true,
+        stats: {
+            gamesPlayed: 11,
+            gamesWon: 7,
+            totalPoints: 1250,
+            accuracy: 83,
+            favoriteCategory: 'objects'
+        }
+    },
+    {
+        id: '10',
+        name: 'Սոնա Հակոբյան',
+        avatar: '👩‍⚖️',
+        department: 'Իրավաբանական',
+        position: 'Legal Advisor',
+        email: 'sona@company.com',
+        phone: '+374 77 012345',
+        experience: 4,
+        isActive: true,
+        stats: {
+            gamesPlayed: 6,
+            gamesWon: 3,
+            totalPoints: 650,
+            accuracy: 71,
+            favoriteCategory: 'professions'
+        }
+    },
+    {
+        id: '11',
+        name: 'Աշոտ Գևորգյան',
+        avatar: '👨‍✈️',
+        department: 'Կառավարում',
+        position: 'Project Manager',
+        email: 'ashot@company.com',
+        phone: '+374 77 112233',
+        experience: 5,
+        isActive: true,
+        stats: {
+            gamesPlayed: 18,
+            gamesWon: 12,
+            totalPoints: 2100,
+            accuracy: 89,
+            favoriteCategory: 'places'
+        }
+    },
+    {
+        id: '12',
+        name: 'Էլեն Մկրտումյան',
+        avatar: '👩‍🍳',
+        department: 'Մարդկային ռեսուրսներ',
+        position: 'HR Specialist',
+        email: 'elen@company.com',
+        phone: '+374 77 223344',
+        experience: 3,
+        isActive: true,
+        stats: {
+            gamesPlayed: 8,
+            gamesWon: 4,
+            totalPoints: 850,
+            accuracy: 75,
+            favoriteCategory: 'food'
+        }
+    }
+];
+
+const teamColors = [
+    { color: 'from-blue-500 to-cyan-500', bg: 'bg-gradient-to-r from-blue-500 to-cyan-500', emoji: '🔵' },
+    { color: 'from-red-500 to-pink-500', bg: 'bg-gradient-to-r from-red-500 to-pink-500', emoji: '🔴' },
+    { color: 'from-green-500 to-emerald-500', bg: 'bg-gradient-to-r from-green-500 to-emerald-500', emoji: '🟢' },
+    { color: 'from-yellow-500 to-orange-500', bg: 'bg-gradient-to-r from-yellow-500 to-orange-500', emoji: '🟡' },
+    { color: 'from-purple-500 to-violet-500', bg: 'bg-gradient-to-r from-purple-500 to-violet-500', emoji: '🟣' },
+    { color: 'from-teal-500 to-cyan-500', bg: 'bg-gradient-to-r from-teal-500 to-cyan-500', emoji: '🟦' },
+    { color: 'from-pink-500 to-rose-500', bg: 'bg-gradient-to-r from-pink-500 to-rose-500', emoji: '🎀' },
+    { color: 'from-indigo-500 to-blue-500', bg: 'bg-gradient-to-r from-indigo-500 to-blue-500', emoji: '🌀' }
+];
 
 const NewYearCharades = () => {
-    const [gameState, setGameState] = useState('menu');
-    const [teams, setTeams] = useState([]);
+    const [gameState, setGameState] = useState<GameState>('menu');
+    const [teams, setTeams] = useState<Team[]>([]);
     const [currentTeam, setCurrentTeam] = useState(0);
-    const [currentCard, setCurrentCard] = useState(null);
+    const [currentCard, setCurrentCard] = useState<Card | null>(null);
     const [timeLeft, setTimeLeft] = useState(60);
-    const [difficulty, setDifficulty] = useState('medium');
-    const [specialCards, setSpecialCards] = useState({});
+    const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+    const [specialCards, setSpecialCards] = useState<Record<string, boolean>>({});
     const [round, setRound] = useState(1);
     const [maxRounds, setMaxRounds] = useState(5);
-    const [stats, setStats] = useState({
+    const [stats, setStats] = useState<Stats>({
         fastestGuess: null,
         bestPlayer: null,
         slowestGuess: null,
         totalWords: 0,
         skippedWords: 0,
-        history: []
+        history: [],
+        avgTime: 0
     });
     const [showConfetti, setShowConfetti] = useState(false);
-    const [startTime, setStartTime] = useState(null);
-    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [showFireworks, setShowFireworks] = useState(false);
+    const [showSnow, setShowSnow] = useState(false);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [showWord, setShowWord] = useState(true);
-    const [gameMode, setGameMode] = useState('classic');
+    const [gameMode, setGameMode] = useState<GameMode>('classic');
     const [streak, setStreak] = useState(0);
-    const [achievements, setAchievements] = useState([]);
+    const [achievements, setAchievements] = useState<Achievement[]>([]);
     const [cardBack, setCardBack] = useState('gradient1');
     const [teamSize, setTeamSize] = useState(4);
     const [pointsToWin, setPointsToWin] = useState(30);
     const [animateCard, setAnimateCard] = useState(false);
+    const [theme, setTheme] = useState<Theme>('night');
+    const [aiAssistant, setAiAssistant] = useState(true);
+    const [hintLevel, setHintLevel] = useState(0);
+    const [timeMultiplier, setTimeMultiplier] = useState(1);
+    const [showTutorial, setShowTutorial] = useState(false);
+    const [lastAction, setLastAction] = useState('');
+    const [combo, setCombo] = useState(0);
+    const [mood, setMood] = useState<Mood>('neutral');
+    const [particles, setParticles] = useState<Particle[]>([]);
+    const [ambientSounds, setAmbientSounds] = useState(true);
+    
+    // Новые состояния для управления командами и игроками
+    const [availablePlayers, setAvailablePlayers] = useState<Player[]>(predefinedPlayers);
+    const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+    const [newTeamName, setNewTeamName] = useState('');
+    const [selectedTeamColor, setSelectedTeamColor] = useState(0);
+    const [customPlayers, setCustomPlayers] = useState<Player[]>([]);
+    const [newPlayerName, setNewPlayerName] = useState('');
+    const [newPlayerDepartment, setNewPlayerDepartment] = useState('');
+    const [newPlayerPosition, setNewPlayerPosition] = useState('');
+    const [newPlayerEmail, setNewPlayerEmail] = useState('');
+    const [newPlayerPhone, setNewPlayerPhone] = useState('');
+    const [showPlayerForm, setShowPlayerForm] = useState(false);
+    const [teamSearchTerm, setTeamSearchTerm] = useState('');
+    const [playerSearchTerm, setPlayerSearchTerm] = useState('');
 
-    const categories = {
+    // Заглушки для звуков
+    const [playCorrect] = useSound('/sounds/correct.mp3', { volume: 0.5 });
+    const [playIncorrect] = useSound('/sounds/incorrect.mp3', { volume: 0.3 });
+    const [playWin] = useSound('/sounds/win.mp3', { volume: 0.6 });
+    const [playLose] = useSound('/sounds/lose.mp3', { volume: 0.4 });
+    const [playCardFlip] = useSound('/sounds/card-flip.mp3', { volume: 0.3 });
+    const [playTimer] = useSound('/sounds/timer.mp3', { volume: 0.2 });
+    const [playClick] = useSound('/sounds/click.mp3', { volume: 0.2 });
+    const [playAchievement] = useSound('/sounds/achievement.mp3', { volume: 0.5 });
+    const [playSpecial] = useSound('/sounds/special.mp3', { volume: 0.4 });
+    const [playAmbient] = useSound('/sounds/ambient.mp3', { volume: 0.1, loop: true });
+
+    const categories: Record<string, Category> = {
         movies: {
             name: 'Ֆիլմեր',
             emoji: '🎬',
             color: 'from-red-500 to-pink-600',
-            icon: <Music className="w-5 h-5" />
+            icon: <Music className="w-5 h-5" />,
+            difficulty: 3,
+            description: 'Հայտնի ֆիլմեր և կինոգործիչներ'
         },
         professions: {
             name: 'Մասնագիտություններ',
             emoji: '👔',
             color: 'from-blue-500 to-cyan-600',
-            icon: <Coffee className="w-5 h-5" />
+            icon: <Coffee className="w-5 h-5" />,
+            difficulty: 2,
+            description: 'Տարբեր մասնագիտություններ'
         },
         emotions: {
             name: 'Զգացմունքներ',
             emoji: '😊',
             color: 'from-yellow-400 to-orange-500',
-            icon: <Heart className="w-5 h-5" />
+            icon: <Heart className="w-5 h-5" />,
+            difficulty: 4,
+            description: 'Տարբեր զգացմունքներ և էմոցիաներ'
         },
         actions: {
             name: 'Գործողություններ',
             emoji: '🏃',
             color: 'from-green-500 to-emerald-600',
-            icon: <Rocket className="w-5 h-5" />
+            icon: <Rocket className="w-5 h-5" />,
+            difficulty: 3,
+            description: 'Ֆիզիկական գործողություններ'
         },
         celebrities: {
             name: 'Հանրահայտ անձինք',
             emoji: '⭐',
             color: 'from-purple-500 to-violet-600',
-            icon: <Crown className="w-5 h-5" />
+            icon: <Crown className="w-5 h-5" />,
+            difficulty: 4,
+            description: 'Հայտնի մարդիկ և կերպարներ'
         },
         traditions: {
             name: 'Ամանորյա',
             emoji: '🎄',
             color: 'from-pink-500 to-rose-600',
-            icon: <Gift className="w-5 h-5" />
+            icon: <Gift className="w-5 h-5" />,
+            difficulty: 2,
+            description: 'Ամանորի ավանդույթներ և սովորույթներ'
         },
         animals: {
             name: 'Կենդանիներ',
             emoji: '🦁',
             color: 'from-amber-500 to-yellow-600',
-            icon: <Target className="w-5 h-5" />
+            icon: <Target className="w-5 h-5" />,
+            difficulty: 1,
+            description: 'Տարբեր կենդանիներ'
         },
         food: {
             name: 'Ուտելիք և ըմպելիքներ',
             emoji: '🍕',
             color: 'from-orange-500 to-red-600',
-            icon: <Flame className="w-5 h-5" />
+            icon: <Flame className="w-5 h-5" />,
+            difficulty: 2,
+            description: 'Սննդամթերք և խմիչքներ'
         },
         places: {
             name: 'Վայրեր',
             emoji: '🏰',
             color: 'from-indigo-500 to-blue-600',
-            icon: <BookOpen className="w-5 h-5" />
+            icon: <BookOpen className="w-5 h-5" />,
+            difficulty: 3,
+            description: 'Տարբեր վայրեր և տեսարժան վայրեր'
         },
         objects: {
             name: 'Առարկաներ',
             emoji: '📱',
             color: 'from-teal-500 to-cyan-600',
-            icon: <Lightbulb className="w-5 h-5" />
+            icon: <Lightbulb className="w-5 h-5" />,
+            difficulty: 2,
+            description: 'Առօրյա առարկաներ'
+        },
+        science: {
+            name: 'Գիտություն',
+            emoji: '🔬',
+            color: 'from-indigo-600 to-purple-700',
+            icon: <BrainCircuit className="w-5 h-5" />,
+            difficulty: 5,
+            description: 'Գիտական տերմիններ և հայտնագործություններ'
+        },
+        literature: {
+            name: 'Գրականություն',
+            emoji: '📚',
+            color: 'from-amber-600 to-orange-700',
+            icon: <BookOpen className="w-5 h-5" />,
+            difficulty: 4,
+            description: 'Գրական ստեղծագործություններ և հեղինակներ'
         }
     };
 
-    const words = {
+    const words: Record<string, string[]> = {
         movies: ['Բախտի հեգնանք', 'Մենակ տանը', 'Հարի Փոթեր', 'Տիտանիկ', 'Մատրիցա', 'Կոշտ ընկույզ', 'Աստղային պատերազմներ', 'Ֆորսաժ', 'Ավատար', 'Ինտերստելլար', 'Ջոկեր', 'Սկիզբ', 'Գլադիատոր', 'Տերմինատոր', 'Առյուծ արքան'],
         professions: ['Դեդ Մորոզ', 'Սնեգուրոչկա', 'Կախարդ', 'Հրշեջ', 'Ծրագրավորող', 'Բժիշկ', 'Ուսուցիչ', 'Խոհարար', 'Աստրոնավտ', 'Նկարիչ', 'Երաժիշտ', 'Ճարտարապետ', 'Օդաչու', 'Դետեկտիվ', 'Վետերինար'],
         emotions: ['Հրճվանք', 'Զարմանք', 'Անհամբերություն', 'Ուրախություն', 'Հուզմունք', 'Դժկամություն', 'Հպարտություն', 'Հետաքրքրասիրություն', 'Կարոտ', 'Ներշնչանք', 'Բավարարվածություն', 'Էնտուզիազմ', 'Թեթևություն', 'Հիացմունք', 'Քնքշություն'],
@@ -107,77 +543,437 @@ const NewYearCharades = () => {
         animals: ['Սպիտակ արջ', 'Պինգվին', 'Հյուսիսային եղջերու', 'Նապաստակ', 'Աղվես', 'Գայլ', 'Բու', 'Դելֆին', 'Ընձուղտ', 'Փիղ', 'Կենգուրու', 'Պանդա', 'Կոալա', 'Առյուծ', 'Վագր'],
         food: ['Տորթ', 'Պաղպաղակ', 'Պիցցա', 'Սուշի', 'Բուրգեր', 'Պաստա', 'Սուրճ', 'Թեյ', 'Շոկոլադ', 'Կրուասան', 'Կրեպ', 'Վաֆլի', 'Պոնչիկ', 'Պոպկոռն', 'Լիմոնադ'],
         places: ['Կարմիր հրապարակ', 'Էյֆելյան աշտարակ', 'Բուրգեր', 'Կոլիզեում', 'Ազատության արձան', 'Բիգ Բեն', 'Տաջ Մահալ', 'Դիսնեյլենդ', 'Ակվապարկ', 'Թանգարան', 'Ծովափ', 'Լեռներ', 'Անտառ', 'Վայր', 'Տիեզերք'],
-        objects: ['Խելացի հեռախոս', 'Եղևնու խաղալիք', 'Նվերի տուփ', 'Ձյունանուշ', 'Երիզում', 'Մոմ', 'Ֆոտոապարատ', 'Ժամացույց', 'Հովանոց', 'Աչոցներ', 'Համետ', 'Գիրք', 'Կիթառ', 'Շարֆ', 'Սահնակ']
+        objects: ['Խելացի հեռախոս', 'Եղևնու խաղալիք', 'Նվերի տուփ', 'Ձյունանուշ', 'Երիզում', 'Մոմ', 'Ֆոտոապարատ', 'Ժամացույց', 'Հովանոց', 'Աչոցներ', 'Համետ', 'Գիրք', 'Կիթառ', 'Շարֆ', 'Սահնակ'],
+        science: ['Գրավիտացիա', 'ԴՆԹ', 'Քվանտային ֆիզիկա', 'Էվոլյուցիա', 'Պերիոդիկ աղյուսակ', 'Ֆոտոսինթեզ', 'Ռելյատիվիզմ', 'Նեյտրոն', 'Գեն', 'Բջիջ', 'Մոլեկուլ', 'Ատոմ', 'Էլեկտրոն', 'Պրոտոն', 'Գալակտիկա'],
+        literature: ['Մեծ Գացբի', 'Պատերազմ և խաղաղություն', 'Դոն Կիխոտ', 'Համլետ', 'Կոմս Մոնտե Քրիստո', 'Աննա Կարենինա', 'Ծերունին և ծովը', 'Գանձերի կղզին', 'Փոքրիկ իշխան', 'Մոբի Դիկ', 'Ուլիսես', 'Դեկամերոն', 'Դիվինա կոմեդիա', 'Ֆաուստ', 'Մակբեթ']
     };
 
-    const difficultySettings = {
-        easy: { time: 90, points: 1, label: 'Հեշտ', color: 'from-green-400 to-emerald-500', icon: '😊' },
-        medium: { time: 60, points: 2, label: 'Միջին', color: 'from-yellow-400 to-orange-500', icon: '😎' },
-        hard: { time: 45, points: 3, label: 'Բարդ', color: 'from-orange-500 to-red-600', icon: '🔥' },
-        expert: { time: 30, points: 5, label: 'Փորձառու', color: 'from-red-600 to-purple-700', icon: '💀' },
-        insane: { time: 15, points: 8, label: 'Խելագար', color: 'from-purple-700 to-pink-700', icon: '👿' }
+    const difficultySettings: Record<Difficulty, DifficultySetting> = {
+        easy: { 
+            time: 90, 
+            points: 1, 
+            label: 'Հեշտ', 
+            color: 'from-green-400 to-emerald-500', 
+            icon: '😊',
+            multiplier: 0.8,
+            description: 'Իդեալական սկսնակների համար'
+        },
+        medium: { 
+            time: 60, 
+            points: 2, 
+            label: 'Միջին', 
+            color: 'from-yellow-400 to-orange-500', 
+            icon: '😎',
+            multiplier: 1.0,
+            description: 'Հավասարակշռված բարդություն'
+        },
+        hard: { 
+            time: 45, 
+            points: 3, 
+            label: 'Բարդ', 
+            color: 'from-orange-500 to-red-600', 
+            icon: '🔥',
+            multiplier: 1.3,
+            description: 'Փորձառու խաղացողների համար'
+        },
+        expert: { 
+            time: 30, 
+            points: 5, 
+            label: 'Փորձառու', 
+            color: 'from-red-600 to-purple-700', 
+            icon: '💀',
+            multiplier: 1.7,
+            description: 'Ճշգրիտ ռեակցիա և մտածողություն'
+        },
+        insane: { 
+            time: 15, 
+            points: 8, 
+            label: 'Խելագար', 
+            color: 'from-purple-700 to-pink-700', 
+            icon: '👿',
+            multiplier: 2.2,
+            description: 'Մաքսիմալ մարտահրավեր'
+        }
     };
 
-    const gameModes = {
+    const gameModes: Record<GameMode, GameModeInfo> = {
         classic: {
             name: 'Դասական',
             description: 'Ստանդարտ խաղ տուրերով',
             icon: <Play className="w-6 h-6" />,
-            color: 'from-blue-500 to-cyan-500'
+            color: 'from-blue-500 to-cyan-500',
+            features: ['5 տուր', 'Թիմային խաղ', 'Հավասար հնարավորություններ']
         },
         tournament: {
             name: 'Մրցաշար',
             description: 'Խաղ մինչև որոշակի միավորներ',
             icon: <Trophy className="w-6 h-6" />,
-            color: 'from-yellow-500 to-orange-500'
+            color: 'from-yellow-500 to-orange-500',
+            features: ['Մրցակցային', 'Միավորների նպատակ', 'Մրցանակային ֆոնդ']
         },
         survival: {
             name: 'Գոյատևում',
             description: 'Մեկ սխալ - դուրս ես մնում',
             icon: <Shield className="w-6 h-6" />,
-            color: 'from-red-500 to-pink-500'
+            color: 'from-red-500 to-pink-500',
+            features: ['3 կյանք', 'Լարվածություն', 'Սթրեսային իրավիճակներ']
         },
         blitz: {
             name: 'Բլից',
             description: 'Առավելագույն բառեր 3 րոպեում',
             icon: <Zap className="w-6 h-6" />,
-            color: 'from-purple-500 to-violet-500'
+            color: 'from-purple-500 to-violet-500',
+            features: ['Ժամանակի սահմանափակում', 'Արագ մտածողություն', 'Համակենտրոնացում']
+        },
+        cooperation: {
+            name: 'Խմբային',
+            description: 'Բոլորը միասին դեմ ընդդեմ ժամանակի',
+            icon: <Users className="w-6 h-6" />,
+            color: 'from-green-500 to-emerald-500',
+            features: ['Թիմային աշխատանք', 'Ընդհանուր նպատակ', 'Փոխգործակցություն']
         }
     };
 
-    const specialCardTypes = [
-        { type: 'joker', name: 'Ջոքեր', emoji: '🃏', description: 'Մեկ հուշում', color: 'from-purple-500 to-pink-500' },
-        { type: 'freeze', name: 'Սառեցում', emoji: '❄️', description: '+15 վրկ', color: 'from-cyan-400 to-blue-500' },
-        { type: 'double', name: 'Կրկնակի', emoji: '✨', description: 'Կրկնակի միավորներ', color: 'from-yellow-400 to-orange-500' },
-        { type: 'swap', name: 'Փոխանակում', emoji: '🔄', description: 'Փոխել բառը', color: 'from-green-400 to-emerald-500' },
-        { type: 'shield', name: 'Վահան', emoji: '🛡️', description: 'Պաշտպանություն տուգանքից', color: 'from-blue-500 to-indigo-600' },
-        { type: 'bomb', name: 'Ռումբ', emoji: '💣', description: '-10 վրկ հակառակորդին', color: 'from-red-500 to-orange-600' },
-        { type: 'vision', name: 'Տեսլական', emoji: '👁️', description: 'Ցույց տալ կատեգորիան', color: 'from-indigo-500 to-purple-600' },
-        { type: 'bonus', name: 'Բոնուս', emoji: '💰', description: '+3 միավոր', color: 'from-amber-400 to-yellow-500' }
+    const specialCardTypes: SpecialCard[] = [
+        { 
+            type: 'joker', 
+            name: 'Ջոքեր', 
+            emoji: '🃏', 
+            description: 'Մեկ հուշում', 
+            color: 'from-purple-500 to-pink-500',
+            effect: 'Արտահայտություն մեկ բառով'
+        },
+        { 
+            type: 'freeze', 
+            name: 'Սառեցում', 
+            emoji: '❄️', 
+            description: '+15 վրկ', 
+            color: 'from-cyan-400 to-blue-500',
+            effect: 'Ժամանակի ընդլայնում'
+        },
+        { 
+            type: 'double', 
+            name: 'Կրկնակի', 
+            emoji: '✨', 
+            description: 'Կրկնակի միավորներ', 
+            color: 'from-yellow-400 to-orange-500',
+            effect: 'Միավորների բազմապատկում'
+        },
+        { 
+            type: 'swap', 
+            name: 'Փոխանակում', 
+            emoji: '🔄', 
+            description: 'Փոխել բառը', 
+            color: 'from-green-400 to-emerald-500',
+            effect: 'Նոր բառ ստանալ'
+        },
+        { 
+            type: 'shield', 
+            name: 'Վահան', 
+            emoji: '🛡️', 
+            description: 'Պաշտպանություն տուգանքից', 
+            color: 'from-blue-500 to-indigo-600',
+            effect: 'Տուգանքներից պաշտպանություն'
+        },
+        { 
+            type: 'bomb', 
+            name: 'Ռումբ', 
+            emoji: '💣', 
+            description: '-10 վրկ հակառակորդին', 
+            color: 'from-red-500 to-orange-600',
+            effect: 'Հակառակորդի ժամանակի կրճատում'
+        },
+        { 
+            type: 'vision', 
+            name: 'Տեսլական', 
+            emoji: '👁️', 
+            description: 'Ցույց տալ կատեգորիան', 
+            color: 'from-indigo-500 to-purple-600',
+            effect: 'Կատեգորիայի բացահայտում'
+        },
+        { 
+            type: 'bonus', 
+            name: 'Բոնուս', 
+            emoji: '💰', 
+            description: '+3 միավոր', 
+            color: 'from-amber-400 to-yellow-500',
+            effect: 'Անմիջական միավորներ'
+        },
+        {
+            type: 'timeWarp',
+            name: 'Ժամանակի ճեղք',
+            emoji: '⏳',
+            description: 'Ժամանակը կանգնեցնել 5 վրկ',
+            color: 'from-gray-500 to-blue-800',
+            effect: 'Ժամանակի սառեցում'
+        },
+        {
+            type: 'mindReader',
+            name: 'Մտքերը կարդալ',
+            emoji: '🧠',
+            description: 'Տեսնել հակառակորդի բառը',
+            color: 'from-purple-600 to-pink-700',
+            effect: 'Տեղեկատվության ձեռքբերում'
+        }
     ];
 
+    // Функции для управления игроками
+    const addCustomPlayer = () => {
+        if (!newPlayerName.trim()) {
+            alert('Խնդրում ենք մուտքագրել խաղացողի անունը');
+            return;
+        }
+
+        const newPlayer: Player = {
+            id: `custom-${Date.now()}`,
+            name: newPlayerName,
+            avatar: '👤',
+            department: newPlayerDepartment || 'Այլ',
+            position: newPlayerPosition || 'Խաղացող',
+            email: newPlayerEmail || '',
+            phone: newPlayerPhone || '',
+            experience: 1,
+            isActive: true,
+            stats: {
+                gamesPlayed: 0,
+                gamesWon: 0,
+                totalPoints: 0,
+                accuracy: 0,
+                favoriteCategory: 'traditions'
+            }
+        };
+
+        setCustomPlayers(prev => [...prev, newPlayer]);
+        setAvailablePlayers(prev => [...prev, newPlayer]);
+        
+        setNewPlayerName('');
+        setNewPlayerDepartment('');
+        setNewPlayerPosition('');
+        setNewPlayerEmail('');
+        setNewPlayerPhone('');
+        setShowPlayerForm(false);
+
+        if (soundEnabled) playClick();
+    };
+
+    const removePlayer = (playerId: string) => {
+        setCustomPlayers(prev => prev.filter(p => p.id !== playerId));
+        setAvailablePlayers(prev => prev.filter(p => p.id !== playerId));
+        if (soundEnabled) playClick();
+    };
+
+    // Функции для управления командами
+    const createNewTeam = () => {
+        if (!newTeamName.trim()) {
+            alert('Խնդրում ենք մուտքագրել թիմի անունը');
+            return;
+        }
+
+        const newTeam: Team = {
+            id: `team-${Date.now()}`,
+            name: newTeamName,
+            color: teamColors[selectedTeamColor].color,
+            emoji: teamColors[selectedTeamColor].emoji,
+            players: [],
+            captain: null!,
+            score: 0,
+            specialCards: {
+                joker: 2,
+                freeze: 2,
+                double: 1,
+                swap: 2,
+                shield: 1,
+                bomb: 1,
+                vision: 1,
+                bonus: 1,
+                timeWarp: 1,
+                mindReader: 0
+            },
+            correctGuesses: 0,
+            skippedWords: 0,
+            fastestTime: null,
+            streak: 0,
+            maxStreak: 0,
+            lives: gameMode === 'survival' ? 3 : 0,
+            efficiency: 0,
+            lastAction: null,
+            department: 'Խառը'
+        };
+
+        setTeams(prev => [...prev, newTeam]);
+        setNewTeamName('');
+        setSelectedTeamColor(0);
+        
+        if (soundEnabled) playSpecial();
+    };
+
+    const addPlayerToTeam = (teamId: string, player: Player) => {
+        setTeams(prev => prev.map(team => {
+            if (team.id === teamId && !team.players.some(p => p.id === player.id)) {
+                const updatedPlayers = [...team.players, player];
+                return {
+                    ...team,
+                    players: updatedPlayers,
+                    captain: updatedPlayers.length === 1 ? player : team.captain,
+                    department: updatedPlayers.length > 0 
+                        ? updatedPlayers[0].department 
+                        : 'Խառը'
+                };
+            }
+            return team;
+        }));
+
+        if (soundEnabled) playClick();
+    };
+
+    const removePlayerFromTeam = (teamId: string, playerId: string) => {
+        setTeams(prev => prev.map(team => {
+            if (team.id === teamId) {
+                const updatedPlayers = team.players.filter(p => p.id !== playerId);
+                return {
+                    ...team,
+                    players: updatedPlayers,
+                    captain: updatedPlayers.length > 0 ? updatedPlayers[0] : null!,
+                    department: updatedPlayers.length > 0 
+                        ? updatedPlayers[0].department 
+                        : 'Խառը'
+                };
+            }
+            return team;
+        }));
+
+        if (soundEnabled) playClick();
+    };
+
+    const setTeamCaptain = (teamId: string, playerId: string) => {
+        setTeams(prev => prev.map(team => {
+            if (team.id === teamId) {
+                const captain = team.players.find(p => p.id === playerId);
+                if (captain) {
+                    return { ...team, captain };
+                }
+            }
+            return team;
+        }));
+
+        if (soundEnabled) playClick();
+    };
+
+    const deleteTeam = (teamId: string) => {
+        setTeams(prev => prev.filter(team => team.id !== teamId));
+        if (soundEnabled) playClick();
+    };
+
+    const startGameWithTeams = () => {
+        if (teams.length < 2) {
+            alert('Անհրաժեշտ է առնվազն 2 թիմ խաղի համար');
+            return;
+        }
+
+        if (teams.some(team => team.players.length === 0)) {
+            alert('Բոլոր թիմերը պետք է ունենան առնվազն 1 խաղացող');
+            return;
+        }
+
+        setGameState('ready');
+        if (soundEnabled) playSpecial();
+    };
+
+    // Фильтры для поиска
+    const filteredAvailablePlayers = availablePlayers.filter(player =>
+        player.name.toLowerCase().includes(playerSearchTerm.toLowerCase()) ||
+        player.department.toLowerCase().includes(playerSearchTerm.toLowerCase()) ||
+        player.position.toLowerCase().includes(playerSearchTerm.toLowerCase())
+    );
+
+    const filteredTeams = teams.filter(team =>
+        team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+        team.department.toLowerCase().includes(teamSearchTerm.toLowerCase())
+    );
+
+    // AI Assistant hints based on word difficulty
+    const getAIHint = (word: string, category: string, difficultyLevel: string): string[] => {
+        const hints = {
+            easy: [
+                `Բառը պատկանում է "${categories[category]?.name}" կատեգորիային`,
+                `Բառը սկսվում է "${word[0]}" տառով`,
+                `Բառը պարունակում է ${word.length} տառ`
+            ],
+            medium: [
+                `Կատեգորիա՝ ${categories[category]?.name}`,
+                `Առաջին տառ՝ "${word[0]}", վերջին տառ՝ "${word[word.length - 1]}"`,
+                `Հոմանիշ՝ ${getSynonymHint(word)}`
+            ],
+            hard: [
+                `Կատեգորիա՝ ${categories[category]?.name}`,
+                `Բառի կառուցվածք՝ ${word.length} տառ`,
+                `Ստեղծեք ասոցիացիաներ կատեգորիայի հետ`
+            ]
+        };
+        
+        return hints[difficultyLevel as keyof typeof hints] || hints.medium;
+    };
+
+    const getSynonymHint = (word: string): string => {
+        const synonyms: Record<string, string> = {
+            'Բախտի հեգնանք': 'նախատեսվածություն',
+            'Մենակ տանը': 'մեկուսացում',
+            'Հարի Փոթեր': 'կախարդ',
+            'Դեդ Մորոզ': 'Նոր տարվա հերոս',
+            'Սպիտակ արջ': 'արկտիկական կենդանի',
+            'Տորթ': 'աղանդեր',
+            'Կարմիր հրապարակ': 'պատմական վայր'
+        };
+        return synonyms[word] || 'փորձեք ասոցիացիաներ';
+    };
+
+    // Generate particles for effects
+    const generateParticles = (type: string, count = 30) => {
+        const newParticles: Particle[] = [];
+        for (let i = 0; i < count; i++) {
+            newParticles.push({
+                id: i,
+                type,
+                x: Math.random() * 100,
+                y: Math.random() * 100,
+                size: Math.random() * 10 + 5,
+                speed: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.5 + 0.5
+            });
+        }
+        setParticles(newParticles);
+        setTimeout(() => setParticles([]), 2000);
+    };
+
     useEffect(() => {
-        let interval;
+        let interval: NodeJS.Timeout;
         if (gameState === 'playing' && timeLeft > 0) {
             interval = setInterval(() => {
-                setTimeLeft(prev => prev - 1);
+                setTimeLeft(prev => {
+                    if (prev <= 10 && soundEnabled) {
+                        playTimer();
+                    }
+                    return prev - 1;
+                });
             }, 1000);
         } else if (timeLeft === 0 && gameState === 'playing') {
             handleSkip();
         }
         return () => clearInterval(interval);
-    }, [gameState, timeLeft]);
+    }, [gameState, timeLeft, soundEnabled]);
 
-    const toggleCategory = (category) => {
+    const toggleCategory = (category: string) => {
         setSelectedCategories(prev =>
             prev.includes(category)
                 ? prev.filter(c => c !== category)
                 : [...prev, category]
         );
+        if (soundEnabled) playClick();
     };
 
     const selectAllCategories = () => {
         setSelectedCategories(Object.keys(categories));
+        if (soundEnabled) playClick();
     };
 
     const startSetup = () => {
@@ -185,41 +981,8 @@ const NewYearCharades = () => {
             alert('Ընտրեք գոնե մեկ կատեգորիա!');
             return;
         }
+        if (soundEnabled) playClick();
         setGameState('teamSetup');
-    };
-
-    const createTeams = () => {
-        if (teamSize < 2) {
-            alert('Անհրաժեշտ է առնվազն 2 թիմ!');
-            return;
-        }
-
-        const newTeams = [];
-        for (let i = 0; i < teamSize; i++) {
-            newTeams.push({
-                name: `Թիմ ${i + 1}`,
-                score: 0,
-                specialCards: {
-                    joker: 2,
-                    freeze: 2,
-                    double: 1,
-                    swap: 2,
-                    shield: 1,
-                    bomb: 1,
-                    vision: 1,
-                    bonus: 1
-                },
-                correctGuesses: 0,
-                skippedWords: 0,
-                fastestTime: null,
-                streak: 0,
-                maxStreak: 0,
-                lives: gameMode === 'survival' ? 3 : 0
-            });
-        }
-
-        setTeams(newTeams);
-        setGameState('ready');
     };
 
     const startGame = () => {
@@ -228,6 +991,11 @@ const NewYearCharades = () => {
         setStartTime(Date.now());
         setAnimateCard(true);
         setTimeout(() => setAnimateCard(false), 500);
+        if (soundEnabled) {
+            playCardFlip();
+            playSpecial();
+        }
+        generateParticles('sparkle', 20);
     };
 
     const drawCard = () => {
@@ -235,49 +1003,80 @@ const NewYearCharades = () => {
             ? selectedCategories
             : Object.keys(categories);
 
-        const randomCategory = availableCategories[Math.floor(Math.random() * availableCategories.length)];
-        const categoryWords = words[randomCategory];
+        // AI-based card selection based on team performance
+        let selectedCategory: string;
+        if (aiAssistant && teams[currentTeam]) {
+            const teamEfficiency = teams[currentTeam].correctGuesses / (teams[currentTeam].correctGuesses + teams[currentTeam].skippedWords) || 0.5;
+            const appropriateCategories = availableCategories.filter(cat => 
+                categories[cat].difficulty <= Math.ceil(teamEfficiency * 5)
+            );
+            selectedCategory = appropriateCategories.length > 0 
+                ? appropriateCategories[Math.floor(Math.random() * appropriateCategories.length)]
+                : availableCategories[Math.floor(Math.random() * availableCategories.length)];
+        } else {
+            selectedCategory = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+        }
+
+        const categoryWords = words[selectedCategory];
         const randomWord = categoryWords[Math.floor(Math.random() * categoryWords.length)];
 
         setCurrentCard({
             word: randomWord,
-            category: randomCategory,
-            categoryInfo: categories[randomCategory]
+            category: selectedCategory,
+            categoryInfo: categories[selectedCategory],
+            difficulty: categories[selectedCategory].difficulty,
+            aiHint: getAIHint(randomWord, selectedCategory, difficulty)
         });
         setTimeLeft(difficultySettings[difficulty].time);
         setStats(prev => ({ ...prev, totalWords: prev.totalWords + 1 }));
+        
+        if (soundEnabled) playCardFlip();
     };
 
     const handleCorrect = () => {
+        if (!currentCard) return;
+        
         const timeTaken = difficultySettings[difficulty].time - timeLeft;
         const basePoints = difficultySettings[difficulty].points;
-        let multiplier = 1;
+        let multiplier = difficultySettings[difficulty].multiplier;
 
-        if (specialCards.double) multiplier = 2;
+        if (specialCards.double) multiplier *= 2;
         if (streak >= 3) multiplier += 0.5;
         if (timeTaken < 10) multiplier += 0.5;
+        if (combo > 0) multiplier += combo * 0.1;
 
         const points = Math.floor(basePoints * multiplier);
 
         setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 2000);
+        setShowFireworks(true);
+        generateParticles('confetti', 50);
+        setTimeout(() => {
+            setShowConfetti(false);
+            setShowFireworks(false);
+        }, 2000);
 
         setStreak(prev => prev + 1);
+        setCombo(prev => prev + 1);
+        setMood('happy');
 
-        const newHistory = {
+        const newHistory: HistoryItem = {
             team: teams[currentTeam].name,
             word: currentCard.word,
             time: timeTaken,
             points: points,
-            round: round
+            round: round,
+            difficulty: currentCard.difficulty,
+            multiplier: multiplier.toFixed(2)
         };
 
-        setTeams(prev => prev.map((team, idx) => {
+        const updatedTeams = teams.map((team, idx) => {
             if (idx === currentTeam) {
                 const newCorrectGuesses = team.correctGuesses + 1;
                 const newFastestTime = team.fastestTime ? Math.min(team.fastestTime, timeTaken) : timeTaken;
                 const newStreak = team.streak + 1;
                 const newMaxStreak = Math.max(team.maxStreak, newStreak);
+                const totalActions = team.correctGuesses + team.skippedWords;
+                const newEfficiency = totalActions > 0 ? (newCorrectGuesses / totalActions) * 100 : 100;
 
                 return {
                     ...team,
@@ -285,60 +1084,139 @@ const NewYearCharades = () => {
                     correctGuesses: newCorrectGuesses,
                     fastestTime: newFastestTime,
                     streak: newStreak,
-                    maxStreak: newMaxStreak
+                    maxStreak: newMaxStreak,
+                    efficiency: newEfficiency,
+                    lastAction: { type: 'correct', points, time: Date.now() }
                 };
             }
             return team;
-        }));
+        });
+
+        setTeams(updatedTeams);
 
         setStats(prev => {
-            const newStats = { ...prev, history: [...prev.history, newHistory] };
+            const totalTime = prev.history.reduce((sum, item) => sum + item.time, 0) + timeTaken;
+            const avgTime = totalTime / (prev.history.length + 1);
+            const newStats: Stats = { 
+                ...prev, 
+                history: [...prev.history, newHistory],
+                avgTime: Math.round(avgTime * 100) / 100
+            };
 
             if (!newStats.fastestGuess || timeTaken < newStats.fastestGuess.time) {
-                newStats.fastestGuess = { team: teams[currentTeam].name, time: timeTaken, word: currentCard.word };
+                newStats.fastestGuess = { 
+                    team: teams[currentTeam].name, 
+                    time: timeTaken, 
+                    word: currentCard.word,
+                    points: points 
+                };
             }
 
             if (!newStats.slowestGuess || timeTaken > newStats.slowestGuess.time) {
-                newStats.slowestGuess = { team: teams[currentTeam].name, time: timeTaken, word: currentCard.word };
+                newStats.slowestGuess = { 
+                    team: teams[currentTeam].name, 
+                    time: timeTaken, 
+                    word: currentCard.word 
+                };
             }
 
             return newStats;
         });
 
-        checkAchievements(timeTaken);
+        if (soundEnabled) {
+            playCorrect();
+            if (points > 10) playWin();
+        }
+
+        checkAchievements(timeTaken, points);
         nextTurn();
     };
 
     const handleSkip = () => {
         setStreak(0);
-        setTeams(prev => prev.map((team, idx) => {
+        setCombo(0);
+        setMood('sad');
+        
+        if (soundEnabled) playIncorrect();
+
+        const updatedTeams = teams.map((team, idx) => {
             if (idx === currentTeam) {
-                return { ...team, skippedWords: team.skippedWords + 1, streak: 0 };
+                return { 
+                    ...team, 
+                    skippedWords: team.skippedWords + 1, 
+                    streak: 0,
+                    lastAction: { type: 'skip', time: Date.now() }
+                };
             }
             return team;
-        }));
+        });
 
+        setTeams(updatedTeams);
         setStats(prev => ({ ...prev, skippedWords: prev.skippedWords + 1 }));
+        
+        // AI suggests a hint if skipping too much
+        if (aiAssistant && teams[currentTeam]?.skippedWords > 2) {
+            setTimeout(() => {
+                alert(`🤖 AI առաջարկ. Փորձեք օգտագործել հատուկ քարտեր կամ խնդրեք թիմից օգնություն։`);
+            }, 500);
+        }
+        
         nextTurn();
     };
 
-    const checkAchievements = (timeTaken) => {
-        const newAchievements = [];
+    const checkAchievements = (timeTaken: number, points: number) => {
+        const newAchievements: Achievement[] = [];
+        const team = teams[currentTeam];
 
-        if (timeTaken < 5) {
-            newAchievements.push({ name: 'Կայծակ', emoji: '⚡', description: 'Գուշակվել է 5 վայրկյանում!' });
+        if (timeTaken < 3) {
+            newAchievements.push({ 
+                name: 'Մտքի կայծակ', 
+                emoji: '⚡', 
+                description: 'Գուշակվել է 3 վայրկյանում!',
+                points: 50 
+            });
         }
 
-        if (streak >= 5) {
-            newAchievements.push({ name: 'Հաղթանակների շարք', emoji: '🔥', description: '5 ճիշտ պատասխան անընդմեջ!' });
+        if (streak >= 10) {
+            newAchievements.push({ 
+                name: 'Անհաղթահարելի', 
+                emoji: '🏆', 
+                description: '10 ճիշտ պատասխան անընդմեջ!',
+                points: 100 
+            });
         }
 
-        if (teams[currentTeam].score >= pointsToWin && gameMode === 'tournament') {
-            newAchievements.push({ name: 'Չեմպիոն', emoji: '🏆', description: 'Հասել եք նպատակային միավորներին!' });
+        if (team.score >= pointsToWin && gameMode === 'tournament') {
+            newAchievements.push({ 
+                name: 'Չեմպիոն', 
+                emoji: '👑', 
+                description: 'Հասել եք նպատակային միավորներին!',
+                points: 200 
+            });
+        }
+
+        if (points > 15) {
+            newAchievements.push({ 
+                name: 'Մեծ միավոր', 
+                emoji: '💎', 
+                description: `Ստացել եք ${points} միավոր մեկ բառից!`,
+                points: 30 
+            });
+        }
+
+        if (team.efficiency > 90) {
+            newAchievements.push({ 
+                name: 'Կատարելատիպ', 
+                emoji: '🎯', 
+                description: '90%+ արդյունավետություն',
+                points: 75 
+            });
         }
 
         if (newAchievements.length > 0) {
             setAchievements(prev => [...prev, ...newAchievements]);
+            if (soundEnabled) playAchievement();
+            generateParticles('achievement', 20);
         }
     };
 
@@ -363,13 +1241,25 @@ const NewYearCharades = () => {
             }
         }
 
+        if (gameMode === 'survival') {
+            const aliveTeams = teams.filter(team => team.lives > 0);
+            if (aliveTeams.length === 1) {
+                endGame();
+                return;
+            }
+        }
+
         setCurrentTeam(nextTeam);
         setGameState('ready');
         setCurrentCard(null);
+        setHintLevel(0);
     };
 
-    const useSpecialCard = (type) => {
-        if (!teams[currentTeam].specialCards[type] || teams[currentTeam].specialCards[type] <= 0) return;
+    const useSpecialCard = (type: SpecialCardType) => {
+        if (!teams[currentTeam]?.specialCards[type] || teams[currentTeam].specialCards[type] <= 0) return;
+
+        if (soundEnabled) playSpecial();
+        generateParticles('special', 15);
 
         setTeams(prev => prev.map((team, idx) => {
             if (idx === currentTeam) {
@@ -387,36 +1277,79 @@ const NewYearCharades = () => {
         switch (type) {
             case 'freeze':
                 setTimeLeft(prev => prev + 15);
+                setLastAction('Սառեցման քարտ օգտագործված! +15 վայրկյան');
                 break;
             case 'double':
                 setSpecialCards(prev => ({ ...prev, double: true }));
+                setLastAction('Կրկնակի միավորների քարտ ակտիվացված!');
                 break;
             case 'joker':
-                alert(`Հուշում. առաջին տառը - "${currentCard.word[0]}"`);
+                if (currentCard) {
+                    const hint = currentCard.aiHint[Math.min(hintLevel, currentCard.aiHint.length - 1)];
+                    alert(`🤖 AI հուշում: ${hint}`);
+                }
+                setHintLevel(prev => prev + 1);
+                setLastAction('Ջոքեր քարտ օգտագործված! AI հուշում ստացված');
                 break;
             case 'swap':
                 drawCard();
+                setLastAction('Փոխանակման քարտ օգտագործված! Նոր բառ ստացված');
                 break;
             case 'bomb':
                 const nextTeamIdx = (currentTeam + 1) % teams.length;
-                alert(`Ռումբ ուղարկվել է ${teams[nextTeamIdx].name} թիմին!`);
+                setTeams(prev => prev.map((team, idx) => 
+                    idx === nextTeamIdx ? { ...team, score: Math.max(0, team.score - 5) } : team
+                ));
+                alert(`💣 Ռումբ ուղարկվել է ${teams[nextTeamIdx].name} թիմին! -5 միավոր`);
+                setLastAction('Ռումբ քարտ ուղարկված հակառակորդին');
                 break;
             case 'vision':
-                alert(`Կատեգորիա՝ ${currentCard.categoryInfo.name}`);
+                if (currentCard) {
+                    alert(`👁️ Կատեգորիա: ${currentCard.categoryInfo.name}\n📚 Նկարագրություն: ${currentCard.categoryInfo.description}`);
+                }
+                setLastAction('Տեսլական քարտ օգտագործված! Կատեգորիան բացահայտված');
                 break;
             case 'bonus':
                 setTeams(prev => prev.map((team, idx) =>
                     idx === currentTeam ? { ...team, score: team.score + 3 } : team
                 ));
+                setLastAction('Բոնուս քարտ օգտագործված! +3 միավոր');
+                break;
+            case 'timeWarp':
+                setTimeLeft(prev => prev + 5);
+                setLastAction('Ժամանակի ճեղք քարտ օգտագործված! Ժամանակը կանգնեցված է 5 վայրկյան');
+                break;
+            case 'mindReader':
+                if (currentCard) {
+                    alert(`🧠 Հակառակորդի բառը: ${currentCard.word}\n${currentCard.aiHint[0]}`);
+                }
+                setLastAction('Մտքերը կարդալու քարտ օգտագործված');
                 break;
         }
     };
 
     const endGame = () => {
-        const winner = [...teams].sort((a, b) => b.score - a.score)[0];
-        const bestPlayer = [...teams].sort((a, b) => b.correctGuesses - a.correctGuesses)[0];
-        setStats(prev => ({ ...prev, bestPlayer: bestPlayer.name }));
+        const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+        const winner = sortedTeams[0];
+        const bestPlayer = sortedTeams.sort((a, b) => b.correctGuesses - a.correctGuesses)[0];
+        
+        setStats(prev => ({ 
+            ...prev, 
+            bestPlayer: bestPlayer.name,
+            totalTime: prev.history.reduce((sum, item) => sum + item.time, 0)
+        }));
+        
         setGameState('results');
+        setShowFireworks(true);
+        setShowSnow(true);
+        
+        if (soundEnabled) playWin();
+        generateParticles('celebration', 100);
+        
+        setTimeout(() => {
+            setShowFireworks(false);
+            setShowSnow(false);
+        }, 5000);
     };
 
     const resetGame = () => {
@@ -424,95 +1357,245 @@ const NewYearCharades = () => {
         setTeams([]);
         setRound(1);
         setStreak(0);
+        setCombo(0);
         setStats({
             fastestGuess: null,
             bestPlayer: null,
             slowestGuess: null,
             totalWords: 0,
             skippedWords: 0,
-            history: []
+            history: [],
+            avgTime: 0
         });
         setAchievements([]);
         setCurrentTeam(0);
         setCurrentCard(null);
+        setMood('neutral');
+        if (soundEnabled) playClick();
     };
 
-    // ԳԼԽԱՎՈՐ ՄԵՆՅՈՒ
+    const getThemeClasses = () => {
+        switch (theme) {
+            case 'night': return 'from-indigo-900 via-purple-900 to-pink-900';
+            case 'aurora': return 'from-blue-900 via-teal-800 to-emerald-900';
+            case 'fire': return 'from-red-900 via-orange-800 to-amber-900';
+            case 'ocean': return 'from-blue-800 via-cyan-700 to-teal-800';
+            default: return 'from-indigo-900 via-purple-900 to-pink-900';
+        }
+    };
+
+    const ParticleEffect = ({ type }: { type: string }) => {
+        if (!particles.length) return null;
+
+        return (
+            <div className="fixed inset-0 pointer-events-none z-40">
+                {particles.map(particle => (
+                    <div
+                        key={particle.id}
+                        className={`absolute ${type === 'confetti' ? 'text-2xl' : 'text-xl'}`}
+                        style={{
+                            left: `${particle.x}%`,
+                            top: `${particle.y}%`,
+                            opacity: particle.opacity,
+                            transform: `scale(${particle.size / 10})`,
+                            transition: 'all 0.5s ease-out'
+                        }}
+                    >
+                        {type === 'confetti' ? '🎉' : type === 'sparkle' ? '✨' : '🌟'}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const FireworksEffect = () => {
+        if (!showFireworks) return null;
+
+        return (
+            <div className="fixed inset-0 pointer-events-none z-30">
+                {[...Array(20)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-red-500 animate-ping"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            animationDelay: `${i * 0.1}s`,
+                            animationDuration: '1s'
+                        }}
+                    />
+                ))}
+            </div>
+        );
+    };
+
+    const SnowEffect = () => {
+        if (!showSnow) return null;
+
+        return (
+            <div className="fixed inset-0 pointer-events-none z-20">
+                {[...Array(50)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="absolute text-white animate-fall"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * -20}%`,
+                            animationDelay: `${Math.random() * 5}s`,
+                            animationDuration: `${Math.random() * 10 + 10}s`,
+                            fontSize: `${Math.random() * 10 + 10}px`
+                        }}
+                    >
+                        ❄️
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // MAIN MENU
     if (gameState === 'menu') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-20 left-10 text-6xl animate-bounce">❄️</div>
-                    <div className="absolute top-40 right-20 text-5xl animate-bounce delay-300">🎄</div>
-                    <div className="absolute bottom-32 left-1/4 text-7xl animate-bounce delay-500">⭐</div>
-                    <div className="absolute bottom-20 right-1/3 text-6xl animate-bounce delay-700">🎁</div>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 max-w-6xl w-full border-2 border-white/20 shadow-2xl relative z-10">
-                    <div className="text-center mb-8">
-                        <div className="text-8xl mb-4 animate-pulse">🎭</div>
-                        <h1 className="text-6xl font-black text-white mb-3 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
-                            Ամանորյա Կոկորդիլոս PRO
-                        </h1>
-                        <p className="text-2xl text-blue-200">Ամենախելացի "ցույց տուր և գուշակիր" խաղը!</p>
+            <>
+                <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4 transition-all duration-1000`}>
+                    <FireworksEffect />
+                    <SnowEffect />
+                    <ParticleEffect type="sparkle" />
+                    
+                    <div className="absolute top-4 right-4 flex gap-2 z-50">
+                        <button
+                            onClick={() => setSoundEnabled(!soundEnabled)}
+                            className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
+                        >
+                            {soundEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-white" />}
+                        </button>
+                        <button
+                            onClick={() => setTheme(theme === 'night' ? 'aurora' : theme === 'aurora' ? 'fire' : 'night')}
+                            className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
+                        >
+                            {theme === 'night' ? <Moon className="w-6 h-6 text-white" /> : 
+                             theme === 'aurora' ? <CloudRain className="w-6 h-6 text-white" /> : 
+                             <BrickWallFire className="w-6 h-6 text-white" />}
+                        </button>
+                        <button
+                            onClick={() => setAiAssistant(!aiAssistant)}
+                            className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
+                        >
+                            <BrainCircuit className={`w-6 h-6 ${aiAssistant ? 'text-green-400' : 'text-gray-400'}`} />
+                        </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {Object.entries(gameModes).map(([key, mode]) => (
-                            <button
-                                key={key}
-                                onClick={() => {
-                                    setGameMode(key);
-                                    setGameState('setup');
-                                }}
-                                className={`p-6 rounded-2xl transition-all transform hover:scale-105 border-2 ${gameMode === key
-                                    ? 'border-white bg-gradient-to-r ' + mode.color + ' shadow-2xl'
-                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                    }`}
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-3 rounded-xl bg-gradient-to-r ${mode.color}`}>
-                                        {mode.icon}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute top-20 left-10 text-6xl animate-bounce">❄️</div>
+                        <div className="absolute top-40 right-20 text-5xl animate-bounce delay-300">🎄</div>
+                        <div className="absolute bottom-32 left-1/4 text-7xl animate-bounce delay-500">⭐</div>
+                        <div className="absolute bottom-20 right-1/3 text-6xl animate-bounce delay-700">🎁</div>
+                        <div className="absolute top-1/2 left-1/3 text-5xl animate-pulse delay-1000">✨</div>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 max-w-6xl w-full border-2 border-white/20 shadow-2xl relative z-10">
+                        <div className="text-center mb-8">
+                            <div className="text-8xl mb-4 animate-pulse">🎭</div>
+                            <h1 className="text-6xl font-black text-white mb-3 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
+                                Ամանորյա Կոկորդիլոս AI
+                            </h1>
+                            <p className="text-2xl text-blue-200">Խելացի խաղ՝ AI օգնությամբ</p>
+                            <div className="flex items-center justify-center gap-2 mt-2">
+                                <div className="flex items-center gap-1">
+                                    <Brain className="w-4 h-4 text-green-400" />
+                                    <span className="text-sm text-green-300">AI օգնական</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                                    <span className="text-sm text-yellow-300">Դինամիկ բարդություն</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Zap className="w-4 h-4 text-blue-400" />
+                                    <span className="text-sm text-blue-300">Ինտելեկտուալ հուշումներ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            {Object.entries(gameModes).map(([key, mode]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => {
+                                        setGameMode(key as GameMode);
+                                        setGameState('setup');
+                                        if (soundEnabled) playClick();
+                                    }}
+                                    className={`p-6 rounded-2xl transition-all transform hover:scale-105 border-2 hover:shadow-2xl ${gameMode === key
+                                            ? 'border-white bg-gradient-to-r ' + mode.color + ' shadow-2xl'
+                                            : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className={`p-3 rounded-xl bg-gradient-to-r ${mode.color}`}>
+                                            {mode.icon}
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <h3 className="text-2xl font-bold text-white mb-1">{mode.name}</h3>
+                                            <p className="text-white/80 text-sm mb-2">{mode.description}</p>
+                                            <ul className="text-xs text-white/60 space-y-1">
+                                                {mode.features?.map((feature, idx) => (
+                                                    <li key={idx} className="flex items-center gap-1">
+                                                        <ChevronRight className="w-3 h-3" /> {feature}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
-                                    <div className="text-left flex-1">
-                                        <h3 className="text-2xl font-bold text-white mb-1">{mode.name}</h3>
-                                        <p className="text-white/80">{mode.description}</p>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                                <div className="text-3xl mb-2">🎯</div>
+                                <div className="text-white font-semibold">{Object.keys(categories).length} կատեգորիա</div>
+                                <div className="text-white/60 text-sm">{Object.values(words).flat().length}+ բառ</div>
+                            </div>
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                                <div className="text-3xl mb-2">👥</div>
+                                <div className="text-white font-semibold">{availablePlayers.length} խաղացող</div>
+                                <div className="text-white/60 text-sm">Կառավարեք թիմերը</div>
+                            </div>
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all">
+                                <div className="text-3xl mb-2">✨</div>
+                                <div className="text-white font-semibold">{specialCardTypes.length} հատուկ քարտ</div>
+                                <div className="text-white/60 text-sm">Եզակի ունակություններ</div>
+                            </div>
+                        </div>
+
+                        {aiAssistant && (
+                            <div className="mt-6 p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl border border-green-500/30">
+                                <div className="flex items-center gap-3">
+                                    <BrainCircuit className="w-6 h-6 text-green-400" />
+                                    <div>
+                                        <div className="text-green-300 font-semibold">AI օգնական ակտիվ է</div>
+                                        <div className="text-green-400/80 text-sm">Պատրաստ է տրամադրել խելացի հուշումներ և հարմարեցնել խաղը ձեր հմտություններին</div>
                                     </div>
                                 </div>
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                            <div className="text-3xl mb-2">🎯</div>
-                            <div className="text-white font-semibold">10 կատեգորիա</div>
-                            <div className="text-white/60 text-sm">150+ բառ</div>
-                        </div>
-                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                            <div className="text-3xl mb-2">⚡</div>
-                            <div className="text-white font-semibold">5 բարդություն</div>
-                            <div className="text-white/60 text-sm">Հեշտից մինչև խելագար</div>
-                        </div>
-                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                            <div className="text-3xl mb-2">✨</div>
-                            <div className="text-white font-semibold">8 հատուկ քարտ</div>
-                            <div className="text-white/60 text-sm">Եզակի ունակություններ</div>
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            </>
         );
     }
 
-    // ԿԱՏԱՐՈՂԱԿԱՆ ԷԿՐԱՆ
+    // SETUP SCREEN
     if (gameState === 'setup') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4 overflow-y-auto">
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 overflow-y-auto`}>
                 <div className="max-w-6xl mx-auto py-8">
                     <button
-                        onClick={() => setGameState('menu')}
-                        className="mb-6 text-white/80 hover:text-white flex items-center gap-2 transition-colors"
+                        onClick={() => {
+                            setGameState('menu');
+                            if (soundEnabled) playClick();
+                        }}
+                        className="mb-6 text-white/80 hover:text-white flex items-center gap-2 transition-colors hover:scale-105"
                     >
                         ← Ետ մենյու
                     </button>
@@ -522,63 +1605,99 @@ const NewYearCharades = () => {
                             ⚙️ Խաղի կարգավորում
                         </h2>
 
-                        {/* Բարդության ընտրություն */}
+                        {/* Difficulty Selection with AI Analysis */}
                         <div className="mb-8">
-                            <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                                <Flame className="text-orange-400" />
-                                Ընտրեք բարդությունը
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                                    <Flame className="text-orange-400" />
+                                    Ընտրեք բարդությունը
+                                </h3>
+                                {aiAssistant && (
+                                    <div className="text-sm text-blue-300 bg-blue-900/30 px-3 py-1 rounded-full">
+                                        AI խորհուրդ՝ {difficulty === 'easy' ? 'Սկսնակներ' : 
+                                                       difficulty === 'medium' ? 'Միջին մակարդակ' : 
+                                                       difficulty === 'hard' ? 'Փորձառու' : 'Մասնագետ'}
+                                    </div>
+                                )}
+                            </div>
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                 {Object.entries(difficultySettings).map(([key, value]) => (
                                     <button
                                         key={key}
-                                        onClick={() => setDifficulty(key)}
+                                        onClick={() => {
+                                            setDifficulty(key as Difficulty);
+                                            if (soundEnabled) playClick();
+                                        }}
                                         className={`p-4 rounded-xl transition-all transform hover:scale-105 ${difficulty === key
-                                            ? `bg-gradient-to-r ${value.color} text-white shadow-xl scale-105`
-                                            : 'bg-white/10 text-white hover:bg-white/20'
+                                                ? `bg-gradient-to-r ${value.color} text-white shadow-xl scale-105`
+                                                : 'bg-white/10 text-white hover:bg-white/20'
                                             }`}
                                     >
                                         <div className="text-3xl mb-1">{value.icon}</div>
                                         <div className="font-bold">{value.label}</div>
                                         <div className="text-sm opacity-90">{value.time}վ</div>
                                         <div className="text-xs opacity-75">{value.points} միավոր</div>
+                                        <div className="text-xs opacity-60 mt-1">{value.description}</div>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Կատեգորիաների ընտրություն */}
+                        {/* Category Selection with AI Recommendations */}
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-2xl font-bold text-white flex items-center gap-2">
                                     <Target className="text-blue-400" />
-                                    Ընտրեք կատեգորիաները ({selectedCategories.length}/10)
+                                    Ընտրեք կատեգորիաները ({selectedCategories.length}/{Object.keys(categories).length})
                                 </h3>
-                                <button
-                                    onClick={selectAllCategories}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-                                >
-                                    Ընտրել բոլորը
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            selectAllCategories();
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                                    >
+                                        Ընտրել բոլորը
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCategories([]);
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-red-500/20 hover:bg-red-500/30 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                                    >
+                                        Մաքրել
+                                    </button>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                                 {Object.entries(categories).map(([key, cat]) => (
                                     <button
                                         key={key}
                                         onClick={() => toggleCategory(key)}
-                                        className={`p-4 rounded-xl transition-all transform hover:scale-105 ${selectedCategories.includes(key)
-                                            ? `bg-gradient-to-r ${cat.color} text-white shadow-xl`
-                                            : 'bg-white/10 text-white hover:bg-white/20'
+                                        className={`p-4 rounded-xl transition-all transform hover:scale-105 relative ${selectedCategories.includes(key)
+                                                ? `bg-gradient-to-r ${cat.color} text-white shadow-xl`
+                                                : 'bg-white/10 text-white hover:bg-white/20'
                                             }`}
                                     >
+                                        {selectedCategories.includes(key) && (
+                                            <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                                                ✓
+                                            </div>
+                                        )}
                                         <div className="text-3xl mb-1">{cat.emoji}</div>
-                                        <div className="font-semibold text-sm">{cat.name}</div>
+                                        <div className="font-semibold text-sm mb-1">{cat.name}</div>
+                                        <div className="text-xs opacity-75">Բարդություն {cat.difficulty}/5</div>
+                                        <div className="text-xs opacity-60 truncate" title={cat.description}>
+                                            {cat.description}
+                                        </div>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Խաղի ռեժիմի կարգավորումներ */}
+                        {/* Game Mode Settings */}
                         {gameMode === 'tournament' && (
                             <div className="mb-8">
                                 <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
@@ -587,17 +1706,24 @@ const NewYearCharades = () => {
                                 </h3>
                                 <div className="flex items-center gap-4">
                                     <button
-                                        onClick={() => setPointsToWin(Math.max(10, pointsToWin - 5))}
-                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors"
+                                        onClick={() => {
+                                            setPointsToWin(Math.max(10, pointsToWin - 5));
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors hover:scale-110"
                                     >
                                         <Minus className="w-5 h-5" />
                                     </button>
-                                    <div className="flex-1 bg-white/10 rounded-lg p-4 text-center">
-                                        <div className="text-4xl font-bold text-white">{pointsToWin}</div>
+                                    <div className="flex-1 bg-white/10 rounded-lg p-6 text-center">
+                                        <div className="text-5xl font-bold text-white mb-2">{pointsToWin}</div>
+                                        <div className="text-white/60">միավոր</div>
                                     </div>
                                     <button
-                                        onClick={() => setPointsToWin(pointsToWin + 5)}
-                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors"
+                                        onClick={() => {
+                                            setPointsToWin(pointsToWin + 5);
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors hover:scale-110"
                                     >
                                         <Plus className="w-5 h-5" />
                                     </button>
@@ -613,17 +1739,24 @@ const NewYearCharades = () => {
                                 </h3>
                                 <div className="flex items-center gap-4">
                                     <button
-                                        onClick={() => setMaxRounds(Math.max(1, maxRounds - 1))}
-                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors"
+                                        onClick={() => {
+                                            setMaxRounds(Math.max(1, maxRounds - 1));
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors hover:scale-110"
                                     >
                                         <Minus className="w-5 h-5" />
                                     </button>
-                                    <div className="flex-1 bg-white/10 rounded-lg p-4 text-center">
-                                        <div className="text-4xl font-bold text-white">{maxRounds}</div>
+                                    <div className="flex-1 bg-white/10 rounded-lg p-6 text-center">
+                                        <div className="text-5xl font-bold text-white mb-2">{maxRounds}</div>
+                                        <div className="text-white/60">տուր</div>
                                     </div>
                                     <button
-                                        onClick={() => setMaxRounds(maxRounds + 1)}
-                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors"
+                                        onClick={() => {
+                                            setMaxRounds(maxRounds + 1);
+                                            if (soundEnabled) playClick();
+                                        }}
+                                        className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg transition-colors hover:scale-110"
                                     >
                                         <Plus className="w-5 h-5" />
                                     </button>
@@ -632,10 +1765,13 @@ const NewYearCharades = () => {
                         )}
 
                         <button
-                            onClick={startSetup}
-                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105"
+                            onClick={() => {
+                                startSetup();
+                                if (soundEnabled) playSpecial();
+                            }}
+                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl"
                         >
-                            Շարունակել →
+                            Կառավարել Թիմերը →
                         </button>
                     </div>
                 </div>
@@ -643,221 +1779,717 @@ const NewYearCharades = () => {
         );
     }
 
-    // ԹԻՄԵՐԻ ԿԱՐԳԱՎՈՐՈՒՄ
+    // TEAM SETUP SCREEN
     if (gameState === 'teamSetup') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4">
-                <div className="max-w-4xl mx-auto py-8">
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 overflow-y-auto`}>
+                <div className="max-w-6xl mx-auto py-8">
                     <button
-                        onClick={() => setGameState('setup')}
-                        className="mb-6 text-white/80 hover:text-white flex items-center gap-2 transition-colors"
+                        onClick={() => {
+                            setGameState('setup');
+                            if (soundEnabled) playClick();
+                        }}
+                        className="mb-6 text-white/80 hover:text-white flex items-center gap-2 transition-colors hover:scale-105"
                     >
                         ← Ետ
                     </button>
 
                     <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/20 shadow-2xl">
-                        <h2 className="text-4xl font-bold text-white mb-8 text-center flex items-center justify-center gap-3">
-                            <Users className="text-blue-400" />
-                            Թիմեր
-                        </h2>
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-4xl font-bold text-white flex items-center gap-3">
+                                <Users className="text-blue-400" />
+                                Թիմերի Կառավարում
+                            </h2>
+                            <button
+                                onClick={() => setGameState('playerSetup')}
+                                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Ավելացնել խաղացող
+                            </button>
+                        </div>
 
-                        <div className="mb-8">
-                            <h3 className="text-xl font-bold text-white mb-4 text-center">
-                                Քանի՞ թիմ կխաղա?
+                        {/* Создание новой команды */}
+                        <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 rounded-2xl border border-blue-500/30">
+                            <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                <Plus className="text-green-400" />
+                                Ստեղծել Նոր Թիմ
                             </h3>
-                            <div className="flex items-center gap-4 justify-center">
-                                <button
-                                    onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
-                                    className="bg-white/10 hover:bg-white/20 text-white p-4 rounded-xl transition-colors"
-                                >
-                                    <Minus className="w-6 h-6" />
-                                </button>
-                                <div className="bg-white/10 rounded-2xl p-6 min-w-[120px] text-center">
-                                    <div className="text-5xl font-bold text-white">{teamSize}</div>
-                                    <div className="text-white/60 text-sm mt-1">թիմ{teamSize === 1 ? '' : 'եր'}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-white/80 text-sm mb-2">Թիմի Անուն</label>
+                                    <input
+                                        type="text"
+                                        value={newTeamName}
+                                        onChange={(e) => setNewTeamName(e.target.value)}
+                                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Օրինակ՝ IT Բաժին"
+                                    />
                                 </div>
-                                <button
-                                    onClick={() => setTeamSize(Math.min(10, teamSize + 1))}
-                                    className="bg-white/10 hover:bg-white/20 text-white p-4 rounded-xl transition-colors"
-                                >
-                                    <Plus className="w-6 h-6" />
-                                </button>
+                                <div>
+                                    <label className="block text-white/80 text-sm mb-2">Գույն և Սիմվոլ</label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {teamColors.map((color, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setSelectedTeamColor(idx)}
+                                                className={`p-3 rounded-lg transition-all ${selectedTeamColor === idx ? 'ring-2 ring-white scale-110' : 'hover:scale-105'}`}
+                                                style={{ background: color.bg }}
+                                            >
+                                                <span className="text-2xl">{color.emoji}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="flex items-end">
+                                    <button
+                                        onClick={createNewTeam}
+                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
+                                    >
+                                        Ստեղծել Թիմ
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <button
-                            onClick={createTeams}
-                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-2xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105"
-                        >
-                            Ստեղծել թիմեր 🎯
-                        </button>
+                        {/* Поиск команд */}
+                        <div className="mb-6">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={teamSearchTerm}
+                                    onChange={(e) => setTeamSearchTerm(e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 pl-12"
+                                    placeholder="Որոնել թիմեր..."
+                                />
+                                <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+                            </div>
+                        </div>
+
+                        {/* Список существующих команд */}
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                                Ընթացիկ Թիմեր ({filteredTeams.length})
+                            </h3>
+                            
+                            {filteredTeams.length === 0 ? (
+                                <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                    <div className="text-6xl mb-4">👥</div>
+                                    <h4 className="text-xl font-bold text-white mb-2">Թիմեր դեռ չկան</h4>
+                                    <p className="text-white/60">Ստեղծեք առաջին թիմը վերևի ձևի միջոցով</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {filteredTeams.map((team) => (
+                                        <div 
+                                            key={team.id} 
+                                            className="bg-white/5 rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all"
+                                        >
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${team.color}`}>
+                                                        {team.emoji}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xl font-bold text-white">{team.name}</h4>
+                                                        <p className="text-white/60 text-sm flex items-center gap-1">
+                                                            <MapPin className="w-3 h-3" /> {team.department}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => deleteTeam(team.id)}
+                                                    className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <div className="text-white/80 text-sm mb-2">Խաղացողներ ({team.players.length})</div>
+                                                {team.players.length === 0 ? (
+                                                    <div className="text-center py-4 bg-white/5 rounded-xl">
+                                                        <p className="text-white/50">Ոչ մի խաղացող</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {team.players.map(player => (
+                                                            <div 
+                                                                key={player.id} 
+                                                                className="flex items-center justify-between bg-white/5 p-3 rounded-lg"
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="text-2xl">{player.avatar}</div>
+                                                                    <div>
+                                                                        <div className="text-white font-medium">{player.name}</div>
+                                                                        <div className="text-white/60 text-xs">{player.position}</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-1">
+                                                                    {team.captain?.id === player.id && (
+                                                                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs">Կապիտան</span>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => removePlayerFromTeam(team.id, player.id)}
+                                                                        className="p-1 hover:bg-red-500/20 rounded text-red-300"
+                                                                    >
+                                                                        <UserMinus className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setEditingTeam(team)}
+                                                    className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white py-2 rounded-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                    Կառավարել
+                                                </button>
+                                                {team.players.length > 0 && team.captain && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const nonCaptain = team.players.find(p => p.id !== team.captain.id);
+                                                            if (nonCaptain) {
+                                                                setTeamCaptain(team.id, nonCaptain.id);
+                                                            }
+                                                        }}
+                                                        className="px-4 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white py-2 rounded-lg transition-all transform hover:scale-105"
+                                                        title="Փոխել կապիտանին"
+                                                    >
+                                                        <Crown className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Кнопка перехода к управлению игроками */}
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setGameState('playerSetup')}
+                                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white text-lg font-bold py-4 rounded-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                            >
+                                <UserPlus className="w-6 h-6" />
+                                Կառավարել Խաղացողներին
+                            </button>
+                            <button
+                                onClick={startGameWithTeams}
+                                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-lg font-bold py-4 rounded-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                            >
+                                <Play className="w-6 h-6" />
+                                Սկսել Խաղը
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // ՊԱՐՏԱԴՐԱԿԱՆ ԷԿՐԱՆ
-    if (gameState === 'ready') {
+    // PLAYER SETUP SCREEN
+    if (gameState === 'playerSetup') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4 flex items-center justify-center">
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 max-w-2xl w-full border-2 border-white/20 shadow-2xl text-center">
-                    <div className="text-7xl mb-6 animate-bounce">{categories[Object.keys(categories)[currentTeam % Object.keys(categories).length]]?.emoji || '🎭'}</div>
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 overflow-y-auto`}>
+                <div className="max-w-6xl mx-auto py-8">
+                    <button
+                        onClick={() => {
+                            setGameState('teamSetup');
+                            if (soundEnabled) playClick();
+                        }}
+                        className="mb-6 text-white/80 hover:text-white flex items-center gap-2 transition-colors hover:scale-105"
+                    >
+                        ← Ետ թիմերին
+                    </button>
 
-                    <h2 className="text-5xl font-black text-white mb-4">
-                        Թիմի հերթը
-                    </h2>
-                    <div className="text-6xl font-black text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text mb-8">
-                        {teams[currentTeam].name}
+                    <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/20 shadow-2xl">
+                        <h2 className="text-4xl font-bold text-white mb-8 flex items-center gap-3">
+                            <User className="text-purple-400" />
+                            Խաղացողների Կառավարում
+                        </h2>
+
+                        {/* Добавление нового игрока */}
+                        {showPlayerForm ? (
+                            <div className="mb-8 p-6 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-2xl border border-purple-500/30">
+                                <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <UserPlus className="text-purple-400" />
+                                    Ավելացնել Նոր Խաղացող
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div>
+                                        <label className="block text-white/80 text-sm mb-2">Անուն Ազգանուն *</label>
+                                        <input
+                                            type="text"
+                                            value={newPlayerName}
+                                            onChange={(e) => setNewPlayerName(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Օրինակ՝ Սարգիս Մարտիրոսյան"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-white/80 text-sm mb-2">Բաժին</label>
+                                        <input
+                                            type="text"
+                                            value={newPlayerDepartment}
+                                            onChange={(e) => setNewPlayerDepartment(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Օրինակ՝ Ծրագրավորում"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-white/80 text-sm mb-2">Պաշտոն</label>
+                                        <input
+                                            type="text"
+                                            value={newPlayerPosition}
+                                            onChange={(e) => setNewPlayerPosition(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Օրինակ՝ Senior Developer"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-white/80 text-sm mb-2">Էլ. փոստ</label>
+                                        <input
+                                            type="email"
+                                            value={newPlayerEmail}
+                                            onChange={(e) => setNewPlayerEmail(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="user@company.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-white/80 text-sm mb-2">Հեռախոս</label>
+                                        <input
+                                            type="tel"
+                                            value={newPlayerPhone}
+                                            onChange={(e) => setNewPlayerPhone(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="+374 77 123456"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={addCustomPlayer}
+                                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
+                                    >
+                                        Ավելացնել Խաղացող
+                                    </button>
+                                    <button
+                                        onClick={() => setShowPlayerForm(false)}
+                                        className="px-6 bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 text-white font-bold py-3 rounded-lg transition-all"
+                                    >
+                                        Չեղարկել
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setShowPlayerForm(true)}
+                                className="w-full mb-8 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white text-lg font-bold py-4 rounded-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                            >
+                                <UserPlus className="w-6 h-6" />
+                                Ավելացնել Նոր Խաղացող
+                            </button>
+                        )}
+
+                        {/* Поиск игроков */}
+                        <div className="mb-6">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={playerSearchTerm}
+                                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 pl-12"
+                                    placeholder="Որոնել խաղացողներ..."
+                                />
+                                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+                            </div>
+                        </div>
+
+                        {/* Список доступных игроков */}
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                                Բոլոր Խաղացողները ({filteredAvailablePlayers.length})
+                            </h3>
+                            
+                            {filteredAvailablePlayers.length === 0 ? (
+                                <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                    <div className="text-6xl mb-4">👤</div>
+                                    <h4 className="text-xl font-bold text-white mb-2">Խաղացողներ չկան</h4>
+                                    <p className="text-white/60">Ավելացրեք նոր խաղացող վերևի ձևի միջոցով</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {filteredAvailablePlayers.map((player) => (
+                                        <div 
+                                            key={player.id} 
+                                            className="bg-white/5 rounded-2xl p-4 border border-white/20 hover:border-white/40 transition-all"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-3xl">{player.avatar}</div>
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-white">{player.name}</h4>
+                                                        <p className="text-white/60 text-xs">{player.position}</p>
+                                                    </div>
+                                                </div>
+                                                {player.id.startsWith('custom-') && (
+                                                    <button
+                                                        onClick={() => removePlayer(player.id)}
+                                                        className="p-1 hover:bg-red-500/20 rounded text-red-300"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2 text-sm mb-3">
+                                                <div className="flex items-center gap-2 text-white/70">
+                                                    <Briefcase className="w-3 h-3" />
+                                                    <span>{player.department}</span>
+                                                </div>
+                                                {player.email && (
+                                                    <div className="flex items-center gap-2 text-white/70">
+                                                        <Mail className="w-3 h-3" />
+                                                        <span className="truncate">{player.email}</span>
+                                                    </div>
+                                                )}
+                                                {player.phone && (
+                                                    <div className="flex items-center gap-2 text-white/70">
+                                                        <Phone className="w-3 h-3" />
+                                                        <span>{player.phone}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-xs text-white/50">
+                                                    Խաղեր: {player.stats.gamesPlayed} • Հաղթանակներ: {player.stats.gamesWon}
+                                                </div>
+                                                <div className={`px-2 py-1 rounded text-xs ${player.isActive ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                                    {player.isActive ? 'Ակտիվ' : 'Անակտիվ'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Подсказка для добавления игроков в команды */}
+                        <div className="bg-gradient-to-r from-blue-900/20 to-cyan-900/20 rounded-xl p-4 border border-blue-500/30">
+                            <div className="flex items-start gap-3">
+                                <Users className="w-6 h-6 text-blue-400 mt-1" />
+                                <div>
+                                    <div className="text-blue-300 font-semibold mb-1">Ինչպես ավելացնել խաղացողներ թիմերին</div>
+                                    <div className="text-blue-400/80 text-sm">
+                                        1. Վերադարձեք "Թիմերի կառավարում" էջ <br />
+                                        2. Ընտրեք թիմը, որին ցանկանում եք ավելացնել խաղացողներ <br />
+                                        3. Օգտագործեք "Կառավարել" կոճակը խաղացողների ավելացման համար
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // READY SCREEN
+    if (gameState === 'ready') {
+        const team = teams[currentTeam];
+        
+        return (
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 flex items-center justify-center`}>
+                <FireworksEffect />
+                <ParticleEffect type="sparkle" />
+                
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 max-w-2xl w-full border-2 border-white/20 shadow-2xl text-center">
+                    <div className="text-7xl mb-6 animate-bounce">
+                        {team?.emoji || '🎭'}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                    <h2 className="text-5xl font-black text-white mb-4">
+                        Թիմի Հերթը
+                    </h2>
+                    <div className="text-6xl font-black text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text mb-8">
+                        {team?.name || 'Թիմ'}
+                    </div>
+
+                    {/* Информация о команде */}
+                    <div className="mb-6 bg-white/5 rounded-xl p-4 border border-white/20">
+                        <div className="flex items-center justify-center gap-4 mb-3">
+                            <div className="text-2xl">👥</div>
+                            <div>
+                                <div className="text-white font-bold text-xl">{team?.players.length || 0} խաղացող</div>
+                                <div className="text-white/60 text-sm">{team?.department}</div>
+                            </div>
+                        </div>
+                        {team?.captain && (
+                            <div className="flex items-center justify-center gap-2 text-white/80">
+                                <Crown className="w-4 h-4 text-yellow-400" />
+                                Կապիտան՝ {team.captain.name}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
                             <div className="text-yellow-400 text-3xl mb-1">🏆</div>
                             <div className="text-white/60 text-sm">Միավոր</div>
-                            <div className="text-white text-3xl font-bold">{teams[currentTeam].score}</div>
+                            <div className="text-white text-3xl font-bold">{team?.score || 0}</div>
                         </div>
-                        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
                             <div className="text-blue-400 text-3xl mb-1">⚡</div>
                             <div className="text-white/60 text-sm">Տուր</div>
                             <div className="text-white text-3xl font-bold">{round}{gameMode === 'classic' ? `/${maxRounds}` : ''}</div>
                         </div>
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
+                            <div className="text-green-400 text-3xl mb-1">🔥</div>
+                            <div className="text-white/60 text-sm">Հաջողություն</div>
+                            <div className="text-white text-3xl font-bold">{streak}</div>
+                        </div>
                     </div>
 
+                    {aiAssistant && team && (
+                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-xl border border-purple-500/30">
+                            <div className="flex items-center gap-3">
+                                <BrainCircuit className="w-6 h-6 text-purple-400" />
+                                <div className="text-left">
+                                    <div className="text-purple-300 font-semibold">AI Վերլուծություն</div>
+                                    <div className="text-purple-400/80 text-sm">
+                                        {team.efficiency > 80 ? 'Գերազանց արդյունավետություն' :
+                                         team.efficiency > 60 ? 'Լավ կատարում' :
+                                         'Կարող եք բարելավել հաջողությունը'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <button
-                        onClick={startGame}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                        onClick={() => {
+                            startGame();
+                            if (soundEnabled) playSpecial();
+                        }}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
                     >
                         <Play className="w-10 h-10" />
-                        Սկսել ցուցադրումը
+                        Սկսել Ցուցադրումը
                     </button>
                 </div>
             </div>
         );
     }
 
-    // ԽԱՂԱԼՈՒ ԷԿՐԱՆ
-    if (gameState === 'playing') {
+    // PLAYING SCREEN
+    if (gameState === 'playing' && currentCard) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4">
-                {showConfetti && (
-                    <div className="fixed inset-0 pointer-events-none z-50">
-                        {[...Array(50)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute text-4xl animate-ping"
-                                style={{
-                                    left: `${Math.random() * 100}%`,
-                                    top: `${Math.random() * 100}%`,
-                                    animationDelay: `${Math.random() * 0.5}s`,
-                                    animationDuration: '2s'
-                                }}
-                            >
-                                🎉
-                            </div>
-                        ))}
-                    </div>
-                )}
-
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
+                {showConfetti && <ParticleEffect type="confetti" />}
+                <FireworksEffect />
+                
                 <div className="max-w-6xl mx-auto py-8">
-                    {/* Վերնագիր */}
+                    {/* Header with Team Info and AI Assistant */}
                     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/20">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="text-center">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="text-center p-4 bg-white/5 rounded-lg">
                                 <div className="text-white/60 text-sm mb-1">Թիմ</div>
-                                <div className="text-white font-bold text-xl">{teams[currentTeam].name}</div>
+                                <div className="text-white font-bold text-xl">{teams[currentTeam]?.name}</div>
+                                <div className="text-white/40 text-xs mt-1">Արդյունավետություն {teams[currentTeam]?.efficiency.toFixed(0)}%</div>
                             </div>
-                            <div className="text-center">
+                            <div className="text-center p-4 bg-white/5 rounded-lg">
                                 <div className="text-white/60 text-sm mb-1">Ժամանակ</div>
                                 <div className={`text-4xl font-black ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
                                     {timeLeft}
                                 </div>
                             </div>
-                            <div className="text-center">
+                            <div className="text-center p-4 bg-white/5 rounded-lg">
                                 <div className="text-white/60 text-sm mb-1">Միավոր</div>
-                                <div className="text-white font-bold text-xl">{teams[currentTeam].score}</div>
+                                <div className="text-white font-bold text-3xl">{teams[currentTeam]?.score}</div>
+                            </div>
+                            <div className="text-center p-4 bg-white/5 rounded-lg">
+                                <div className="text-white/60 text-sm mb-1">Ռեկորդ</div>
+                                <div className="text-white font-bold text-xl">
+                                    {streak > 0 ? `🔥 ${streak}` : '—'}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Հիմնական քարտ */}
-                    <div className={`bg-white/10 backdrop-blur-xl rounded-3xl p-12 mb-6 border-2 border-white/20 text-center transition-all ${animateCard ? 'scale-110' : 'scale-100'}`}>
-                        <div className={`inline-block px-6 py-3 rounded-full bg-gradient-to-r ${currentCard.categoryInfo.color} mb-6`}>
+                    {/* AI Assistant Panel */}
+                    {aiAssistant && (
+                        <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-xl rounded-2xl p-4 mb-6 border border-purple-500/30">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <BrainCircuit className="w-6 h-6 text-purple-400" />
+                                    <div>
+                                        <div className="text-purple-300 font-semibold">AI Օգնական</div>
+                                        <div className="text-purple-400/80 text-sm">
+                                            {currentCard?.difficulty > 4 ? 'Բարդ բառ' :
+                                             currentCard?.difficulty > 3 ? 'Միջին բարդություն' :
+                                             'Հեշտ բառ'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => useSpecialCard('joker')}
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg text-sm transition-all hover:scale-105"
+                                >
+                                    Հուշում ստանալ
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Main Card with Visual Effects */}
+                    <div className={`relative bg-white/10 backdrop-blur-xl rounded-3xl p-12 mb-6 border-2 border-white/20 text-center transition-all duration-500 ${animateCard ? 'scale-110 ring-4 ring-yellow-400/50' : 'scale-100'}`}>
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl -z-10"></div>
+                        
+                        <div className={`inline-block px-6 py-3 rounded-full bg-gradient-to-r ${currentCard?.categoryInfo?.color || 'from-gray-500 to-gray-700'} mb-6 shadow-lg`}>
                             <div className="flex items-center gap-2 text-white font-semibold">
-                                {currentCard.categoryInfo.icon}
-                                <span>{currentCard.categoryInfo.name}</span>
+                                {currentCard?.categoryInfo?.icon || '🎯'}
+                                <span>{currentCard?.categoryInfo?.name || 'Կատեգորիա'}</span>
                             </div>
                         </div>
 
                         {showWord ? (
-                            <div>
-                                <div className="text-7xl font-black text-white mb-4">
-                                    {currentCard.word}
+                            <div className="animate-fadeIn">
+                                <div className="text-7xl font-black text-white mb-4 animate-pulse-slow">
+                                    {currentCard?.word || 'Բառ'}
                                 </div>
                                 <div className="text-2xl text-white/60">
                                     Ցույց տուր այս բառը!
                                 </div>
+                                {currentCard?.difficulty && (
+                                    <div className="mt-4 text-sm text-white/40">
+                                        Բարդություն {currentCard.difficulty}/5
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            <div className="text-7xl font-black text-white/20">
+                            <div className="text-7xl font-black text-white/20 animate-pulse">
                                 • • • • •
+                            </div>
+                        )}
+
+                        {/* Mood Indicator */}
+                        {mood !== 'neutral' && (
+                            <div className="absolute top-4 right-4">
+                                <div className={`p-2 rounded-full ${mood === 'happy' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                                    {mood === 'happy' ? '😊' : '😔'}
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Հատուկ քարտեր */}
+                    {/* Special Cards with AI Suggestions */}
                     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/20">
-                        <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-yellow-400" />
-                            Հատուկ քարտեր
-                        </h3>
-                        <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                            {specialCardTypes.map(card => (
-                                <button
-                                    key={card.type}
-                                    onClick={() => useSpecialCard(card.type)}
-                                    disabled={!teams[currentTeam].specialCards[card.type] || teams[currentTeam].specialCards[card.type] <= 0}
-                                    className={`p-3 rounded-xl transition-all ${teams[currentTeam].specialCards[card.type] > 0
-                                        ? `bg-gradient-to-r ${card.color} hover:scale-110 cursor-pointer`
-                                        : 'bg-white/5 opacity-30 cursor-not-allowed'
-                                        }`}
-                                    title={card.description}
-                                >
-                                    <div className="text-2xl mb-1">{card.emoji}</div>
-                                    <div className="text-white text-xs font-bold">
-                                        {teams[currentTeam].specialCards[card.type] || 0}
-                                    </div>
-                                </button>
-                            ))}
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-white font-bold flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-yellow-400" />
+                                Հատուկ Քարտեր
+                            </h3>
+                            {aiAssistant && (
+                                <div className="text-sm text-blue-300">
+                                    {specialCardTypes.filter(card => teams[currentTeam]?.specialCards[card.type] > 0).length} մատչելի
+                                </div>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2">
+                            {specialCardTypes.map(card => {
+                                const count = teams[currentTeam]?.specialCards[card.type] || 0;
+                                const canUse = count > 0;
+                                return (
+                                    <button
+                                        key={card.type}
+                                        onClick={() => canUse && useSpecialCard(card.type)}
+                                        disabled={!canUse}
+                                        className={`p-3 rounded-xl transition-all relative group ${canUse
+                                                ? `bg-gradient-to-r ${card.color} hover:scale-110 cursor-pointer active:scale-95`
+                                                : 'bg-white/5 opacity-30 cursor-not-allowed'
+                                            }`}
+                                        title={`${card.name}: ${card.description}`}
+                                    >
+                                        <div className="text-2xl mb-1">{card.emoji}</div>
+                                        <div className="text-white text-xs font-bold">
+                                            {count}
+                                        </div>
+                                        {canUse && (
+                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-50">
+                                                {card.effect}
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Գործողությունների կոճակներ */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Action Buttons with Visual Feedback */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <button
-                            onClick={handleCorrect}
-                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                            onClick={() => {
+                                handleCorrect();
+                                if (soundEnabled) playCorrect();
+                            }}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 active:scale-95 hover:shadow-2xl flex items-center justify-center gap-3 group"
                         >
-                            <Check className="w-8 h-8" />
-                            Գուշակեցինք!
+                            <div className="relative">
+                                <Check className="w-8 h-8" />
+                                <div className="absolute inset-0 animate-ping opacity-20">✓</div>
+                            </div>
+                            Ճիշտ է!
                         </button>
                         <button
-                            onClick={handleSkip}
-                            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white text-2xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                            onClick={() => {
+                                handleSkip();
+                                if (soundEnabled) playIncorrect();
+                            }}
+                            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white text-2xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 active:scale-95 hover:shadow-2xl flex items-center justify-center gap-3"
                         >
                             <X className="w-8 h-8" />
-                            Բաց թողնել
+                            Բաց Թողնել
                         </button>
                     </div>
 
-                    {/* Հաջողականության ցուցիչ */}
-                    {streak > 0 && (
-                        <div className="mt-6 text-center">
-                            <div className="inline-block bg-gradient-to-r from-orange-500 to-red-600 px-6 py-3 rounded-full">
-                                <span className="text-white font-bold text-xl">
-                                    🔇 Հաջողություն՝ {streak}
+                    {/* Last Action Feedback */}
+                    {lastAction && (
+                        <div className="text-center animate-fadeIn">
+                            <div className="inline-block bg-gradient-to-r from-blue-500/20 to-purple-500/20 px-6 py-3 rounded-full border border-blue-500/30">
+                                <span className="text-white/80 text-sm">
+                                    {lastAction}
                                 </span>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Combo and Streak Indicators */}
+                    {(streak > 0 || combo > 0) && (
+                        <div className="mt-6 text-center space-y-2">
+                            {streak > 0 && (
+                                <div className="inline-block bg-gradient-to-r from-orange-500 to-red-600 px-6 py-3 rounded-full animate-pulse">
+                                    <span className="text-white font-bold text-xl">
+                                        🔥 {streak} անընդմեջ ճիշտ
+                                    </span>
+                                </div>
+                            )}
+                            {combo > 0 && (
+                                <div className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-3 rounded-full ml-2">
+                                    <span className="text-white font-bold text-lg">
+                                        ⚡ Combo x{combo}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -865,118 +2497,175 @@ const NewYearCharades = () => {
         );
     }
 
-    // Արդյունքների էկրան
+    // RESULTS SCREEN
     if (gameState === 'results') {
         const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+        const winner = sortedTeams[0];
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4 overflow-y-auto">
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 overflow-y-auto`}>
+                <FireworksEffect />
+                <SnowEffect />
+                <ParticleEffect type="celebration" />
+                
                 <div className="max-w-6xl mx-auto py-8">
                     <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/20 shadow-2xl">
                         <div className="text-center mb-8">
                             <div className="text-8xl mb-4 animate-bounce">🏆</div>
                             <h2 className="text-6xl font-black text-white mb-2">
-                                Խաղն ավարտվեց!
+                                Խաղն Ավարտվեց!
                             </h2>
-                            <p className="text-2xl text-blue-200">Շնորհավորում ենք հաղթողներին!</p>
+                            <p className="text-2xl text-blue-200">Շնորհավորում ենք բոլոր մասնակիցներին!</p>
                         </div>
 
-                        {/* Հաղթողների պատվանդան */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        {/* Winner Announcement */}
+                        <div className="mb-8 p-8 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-3xl border-2 border-yellow-400/50">
+                            <div className="flex flex-col items-center">
+                                <div className="text-5xl mb-4">👑</div>
+                                <h3 className="text-3xl font-bold text-white mb-2">Հաղթող</h3>
+                                <div className="text-4xl font-black text-yellow-300 mb-4">{winner?.name}</div>
+                                <div className="text-6xl font-black text-white">{winner?.score} միավոր</div>
+                                {soundEnabled && playWin()}
+                            </div>
+                        </div>
+
+                        {/* Podium */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             {sortedTeams.slice(0, 3).map((team, idx) => (
                                 <div
-                                    key={team.name}
-                                    className={`p-6 rounded-2xl border-2 ${idx === 0
-                                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500 border-yellow-300 transform scale-105'
-                                        : idx === 1
-                                            ? 'bg-gradient-to-r from-gray-300 to-gray-400 border-gray-200'
-                                            : 'bg-gradient-to-r from-amber-600 to-amber-700 border-amber-500'
+                                    key={team.id}
+                                    className={`p-8 rounded-2xl border-2 transform transition-all hover:scale-105 ${idx === 0
+                                            ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-yellow-400 scale-105'
+                                            : idx === 1
+                                                ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-300'
+                                                : 'bg-gradient-to-r from-amber-700/30 to-amber-800/30 border-amber-600'
                                         }`}
                                 >
                                     <div className="text-center">
-                                        <div className="text-5xl mb-2">
-                                            {idx === 0 ? '👑' : idx === 1 ? '🥈' : '🥉'}
+                                        <div className="text-6xl mb-4">
+                                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
                                         </div>
-                                        <div className="text-2xl font-bold text-white mb-2">{team.name}</div>
-                                        <div className="text-4xl font-black text-white mb-3">{team.score} միավոր</div>
-                                        <div className="space-y-1 text-sm text-white/80">
-                                            <div>✅ Գուշակված՝ {team.correctGuesses}</div>
-                                            <div>⏭️ Բաց թողնված՝ {team.skippedWords}</div>
-                                            {team.fastestTime && <div>⚡ Լավագույն ժամանակ՝ {team.fastestTime}վ</div>}
-                                            <div>🔥 Առավելագույն շարք՝ {team.maxStreak}</div>
+                                        <div className="text-2xl font-bold text-white mb-3">{team.name}</div>
+                                        <div className="text-5xl font-black text-white mb-4">{team.score}</div>
+                                        <div className="space-y-2 text-sm text-white/80">
+                                            <div className="flex justify-between">
+                                                <span>Ճիշտ պատասխաններ</span>
+                                                <span className="font-bold">✅ {team.correctGuesses}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Բաց թողնված</span>
+                                                <span className="font-bold">⏭️ {team.skippedWords}</span>
+                                            </div>
+                                            {team.fastestTime && (
+                                                <div className="flex justify-between">
+                                                    <span>Լավագույն ժամանակ</span>
+                                                    <span className="font-bold">⚡ {team.fastestTime}վ</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between">
+                                                <span>Արդյունավետություն</span>
+                                                <span className="font-bold">🎯 {team.efficiency.toFixed(0)}%</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Մաքսիմալ շարք</span>
+                                                <span className="font-bold">🔥 {team.maxStreak}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Վիճակագրություն */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <div className="bg-white/10 rounded-xl p-6 border border-white/20">
+                        {/* Statistics and AI Analysis */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div className="bg-white/10 rounded-2xl p-6 border border-white/20">
                                 <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
                                     <TrendingUp className="text-green-400" />
-                                    Խաղի վիճակագրություն
+                                    Խաղի Վիճակագրություն
                                 </h3>
                                 <div className="space-y-3 text-white">
-                                    <div className="flex justify-between">
-                                        <span className="text-white/60">Ընդհանուր բառեր՝</span>
-                                        <span className="font-bold">{stats.totalWords}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/10">
+                                        <span className="text-white/60">Ընդհանուր բառեր</span>
+                                        <span className="font-bold text-xl">{stats.totalWords}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-white/60">Գուշակված՝</span>
-                                        <span className="font-bold">{stats.totalWords - stats.skippedWords}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/10">
+                                        <span className="text-white/60">Ճիշտ գուշակված</span>
+                                        <span className="font-bold text-xl text-green-400">{stats.totalWords - stats.skippedWords}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-white/60">Բաց թողնված՝</span>
-                                        <span className="font-bold">{stats.skippedWords}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/10">
+                                        <span className="text-white/60">Բաց թողնված</span>
+                                        <span className="font-bold text-xl text-red-400">{stats.skippedWords}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-white/10">
+                                        <span className="text-white/60">Արդյունավետություն</span>
+                                        <span className="font-bold text-xl">
+                                            {stats.totalWords > 0 ? Math.round((stats.totalWords - stats.skippedWords) / stats.totalWords * 100) : 0}%
+                                        </span>
                                     </div>
                                     {stats.fastestGuess && (
-                                        <div className="flex justify-between">
-                                            <span className="text-white/60">Ամենաարագ գուշակում՝</span>
-                                            <span className="font-bold">{stats.fastestGuess.time}վ</span>
+                                        <div className="flex justify-between items-center py-2 border-b border-white/10">
+                                            <span className="text-white/60">Ամենաարագ պատասխան</span>
+                                            <span className="font-bold text-xl">⚡ {stats.fastestGuess.time}վ</span>
+                                        </div>
+                                    )}
+                                    {stats.avgTime > 0 && (
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-white/60">Միջին ժամանակ</span>
+                                            <span className="font-bold text-xl">⏱️ {stats.avgTime}վ</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Ձեռքբերումներ */}
-                            {achievements.length > 0 && (
-                                <div className="bg-white/10 rounded-xl p-6 border border-white/20">
-                                    <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
-                                        <Award className="text-yellow-400" />
-                                        Ձեռքբերումներ
-                                    </h3>
-                                    <div className="space-y-3">
+                            {/* Achievements */}
+                            <div className="bg-white/10 rounded-2xl p-6 border border-white/20">
+                                <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
+                                    <Award className="text-yellow-400" />
+                                    Ձեռքբերումներ
+                                </h3>
+                                {achievements.length > 0 ? (
+                                    <div className="space-y-3 max-h-64 overflow-y-auto">
                                         {achievements.map((ach, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-lg">
+                                            <div 
+                                                key={idx} 
+                                                className="flex items-center gap-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4 rounded-xl border border-purple-500/30 hover:scale-105 transition-all"
+                                            >
                                                 <div className="text-3xl">{ach.emoji}</div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <div className="text-white font-bold">{ach.name}</div>
                                                     <div className="text-white/60 text-sm">{ach.description}</div>
                                                 </div>
+                                                <div className="text-yellow-400 font-bold">+{ach.points}</div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="text-center py-8 text-white/60">
+                                        Դեռ չկան ձեռքբերումներ
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Բոլոր թիմերի աղյուսակ */}
+                        {/* All Teams Leaderboard */}
                         {sortedTeams.length > 3 && (
-                            <div className="bg-white/10 rounded-xl p-6 border border-white/20 mb-8">
+                            <div className="bg-white/10 rounded-2xl p-6 border border-white/20 mb-8">
                                 <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
                                     <Trophy className="text-yellow-400" />
-                                    Ամբողջական արդյունքների աղյուսակ
+                                    Բոլոր Թիմերի Վարկանիշ
                                 </h3>
                                 <div className="space-y-2">
                                     {sortedTeams.slice(3).map((team, idx) => (
-                                        <div key={team.name} className="flex items-center justify-between bg-white/5 p-4 rounded-lg">
-                                            <div className="flex items-center gap-3">
+                                        <div 
+                                            key={team.id} 
+                                            className="flex items-center justify-between bg-white/5 p-4 rounded-xl hover:bg-white/10 transition-all"
+                                        >
+                                            <div className="flex items-center gap-4">
                                                 <div className="text-2xl font-bold text-white/60">#{idx + 4}</div>
                                                 <div>
                                                     <div className="text-white font-bold">{team.name}</div>
-                                                    <div className="text-white/60 text-sm">
-                                                        ✅ {team.correctGuesses} • ⏭️ {team.skippedWords}
+                                                    <div className="text-white/60 text-xs">
+                                                        ✅ {team.correctGuesses} • ⏭️ {team.skippedWords} • 🎯 {team.efficiency.toFixed(0)}%
                                                     </div>
                                                 </div>
                                             </div>
@@ -987,43 +2676,24 @@ const NewYearCharades = () => {
                             </div>
                         )}
 
-                        {/* Խաղի պատմություն */}
-                        {stats.history.length > 0 && (
-                            <div className="bg-white/10 rounded-xl p-6 border border-white/20 mb-8">
-                                <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2">
-                                    <Clock className="text-blue-400" />
-                                    Խաղի պատմություն
-                                </h3>
-                                <div className="max-h-64 overflow-y-auto space-y-2">
-                                    {stats.history.slice().reverse().map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-lg text-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-white/60">Տուր {item.round}</div>
-                                                <div className="text-white font-semibold">{item.team}</div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-white/80">{item.word}</div>
-                                                <div className="text-white/60">{item.time}վ</div>
-                                                <div className="text-green-400 font-bold">+{item.points}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Գործողությունների կոճակներ */}
+                        {/* Action Buttons */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <button
-                                onClick={resetGame}
-                                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                                onClick={() => {
+                                    resetGame();
+                                    if (soundEnabled) playClick();
+                                }}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
                             >
                                 <RotateCcw className="w-6 h-6" />
-                                Նոր խաղ
+                                Նոր Խաղ
                             </button>
                             <button
-                                onClick={() => setGameState('ready')}
-                                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                                onClick={() => {
+                                    setGameState('teamSetup');
+                                    if (soundEnabled) playClick();
+                                }}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xl font-bold py-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
                             >
                                 <Play className="w-6 h-6" />
                                 Վերախաղարկում
