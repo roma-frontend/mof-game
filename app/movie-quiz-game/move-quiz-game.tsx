@@ -93,168 +93,808 @@ const MovieQuizGame = () => {
     const [activeTeam, setActiveTeam] = useState(0);
 
     // Вопросы (улучшенные ссылки)
-    const questions: Question[] = [
-        {
-            id: 1,
-            type: 'video',
-            title: '🎬 Ո՞ր ֆիլմի տեսարանն է սա',
-            hint: 'Պարային մրցույթ ծննդյան երեկույթին',
-            answer: 'Մենք հրեշտակներ չենք (2000)',
-            year: 2000,
-            points: 300,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/embed/2GFcHcL3_iI',
-            },
-            funFact: 'Թրևիսը իրականում չգիտեր պարել, նրան սովորեցրել են ֆիլմի համար',
-            category: 'comedy',
-            difficulty: 'medium'
-        },
-        {
-            id: 2,
+const questions: Question[] = [
+    {
+        id: 1,
+        type: 'audio',
+        title: '🎬 Լսեք և գուշակեք ֆիլմը',
+        hint: '💔 "I\'ll never let go, Jack!"',
+        answer: 'Titanic (1997)',
+        year: 1997,
+        points: 300,
+        media: {
             type: 'audio',
-            title: '🎵 Լսեք և գուշակեք ֆիլմը',
-            hint: 'Ֆիլմի անունը նշանակում է "մենակ տանը"',
-            answer: 'Home Alone (1990)',
-            year: 1990,
-            points: 250,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/watch?v=sYjp29cd53g&list=PLyYWZDMWCCk71sHITT-GYYNL2B77B17Wu&index=9',
-            },
-            funFact: 'Երաժշտությունը գրվել է հայտնի կոմպոզիտոր Ջոն Ուիլյամսի կողմից',
-            category: 'hollywood',
-            difficulty: 'easy'
+            url: '/audio/titanic.mp3',
         },
-        {
-            id: 3,
-            type: 'scene',
-            title: '🎪 Ո՞ր կատակերգության տեսարանն է',
-            hint: 'Կանաչ սվիտեր, սեղանի վրա պար',
-            answer: 'Ձմեռ պապի կյանքը (1994)',
-            year: 1994,
-            points: 350,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/watch?v=ucIW84D_EI0',
-            },
-            funFact: 'Տիմ Ալենի պարը դարձել է կուլտային տեսարան',
-            category: 'comedy',
-            difficulty: 'hard'
-        },
-        {
-            id: 4,
-            type: 'video',
-            title: '🌟 Սովետական դասական',
-            hint: '«Հե՜յ, Սվետլանա, նվերնե՜ր»',
-            answer: 'Կարմիր գլխարկի արկածները (1977)',
-            year: 1977,
-            points: 200,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/watch?v=dZFr0Eji6gc&list=RDdZFr0Eji6gc&start_radio=1',
-            },
-            funFact: 'Այս մուլտֆիլմի երգերը դասական են դարձել նոր տարվա սեղանի ժամանակ',
-            category: 'soviet',
-            difficulty: 'medium'
-        },
-        {
-            id: 5,
-            type: 'emoji',
-            title: '😊 Էմոջի վիկտորինա',
-            hint: '🎅🏻 🏠 🚫 👨‍👩‍👧‍👦 🎄',
-            answer: 'Home Alone (1990)',
-            year: 1990,
-            points: 400,
-            media: {
-                type: 'giphy',
-                url: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
-            },
-            funFact: 'Մակոլեյ Քալկինը ստացել է 4,5 միլիոն դոլար այս ֆիլմի համար',
-            category: 'hollywood',
-            difficulty: 'expert'
-        },
-        {
-            id: 6,
+        funFact: 'Այս տողը դարձել է կուլտային, թեև ֆիլմում Ռոուզն իսկապես բաց է թողնում Ջեքին',
+        category: 'hollywood',
+        difficulty: 'easy'
+    },
+    {
+        id: 2,
+        type: 'audio',
+        title: '😱 Լսեք այս հայտնի արտահայտությունը',
+        hint: '🎭 "You talking to me?"',
+        answer: 'Taxi Driver (1976)',
+        year: 1976,
+        points: 400,
+        media: {
             type: 'audio',
-            title: '🎶 Տոնական երգի ճանաչում',
-            hint: '«Last Christmas I gave you my heart...»',
-            answer: 'Last Christmas - Wham!',
-            year: 1984,
-            points: 200,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/watch?v=KhqNTjbQ71A&list=RDKhqNTjbQ71A&start_radio=1',
-            },
-            funFact: 'Այս երգը վաճառվել է ավելի քան 1.8 միլիոն օրինակով',
-            category: 'music',
-            difficulty: 'easy'
+            url: '/audio/taxi-driver.mp3',
         },
-        {
-            id: 7,
-            type: 'video',
-            title: '🎄 Հայկական նորամյա ֆիլմ',
-            hint: '«Ձմեռ պապ, ձմեռ պապ, ինչո՞ւ ես ուշանում»',
-            answer: 'Ձմեռ պապը գյուղից (1983)',
-            year: 1983,
-            points: 300,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/embed/4QqHwG3nQ8E',
-            },
-            funFact: 'Այս ֆիլմը դասական է դարձել ամբողջ ԱՊՀ-ում',
-            category: 'armenia',
-            difficulty: 'medium'
+        funFact: 'Ռոբերտ Դե Նիրոն իմպրովիզացրել է այս տեսարանը',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 3,
+        type: 'emoji',
+        title: '🔮 Էմոջիներով գուշակիր ֆիլմը',
+        hint: '👨‍👩‍👧‍👦 👻 🏠 👻 🔫',
+        answer: 'The Shining (1980)',
+        year: 1980,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmVidWp2c2NpemV3MzRuNnM1czNnOHl2emI2MXRiMDhzMGVhbmRnMCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/39PFu5l7q5nOXqZDPZ/giphy.gif',
         },
-        {
-            id: 8,
-            type: 'quote',
-            title: '💬 Ճանաչեք արտահայտությունը',
-            hint: 'Գրուշան կրկնում է այս բառերը ամեն անգամ',
-            answer: 'Ձմեռ պապը 3 (2006)',
-            year: 2006,
-            points: 250,
-            media: {
-                type: 'giphy',
-                url: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
-            },
-            funFact: 'Այս արտահայտությունը դարձել է ինտերնետ-մեմ',
-            category: 'comedy',
-            difficulty: 'medium'
-        },
-        {
-            id: 9,
-            type: 'scene',
-            title: '🎭 Կադր ֆիլմից',
-            hint: 'Տղամարդը հիշում է իր կնոջն այս տողերով',
-            answer: 'Սիրո իրական իմաստը (2003)',
-            year: 2003,
-            points: 350,
-            media: {
-                type: 'giphy',
-                url: 'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif',
-            },
-            funFact: 'Ֆիլմը նկարահանվել է ընդամենը 6 շաբաթում',
-            category: 'comedy',
-            difficulty: 'hard'
-        },
-        {
-            id: 10,
+        funFact: '"Այստեղ է Ջոննին!" արտահայտությունը դարձել է սարսափ ֆիլմերի խորհրդանիշ',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 4,
+        type: 'audio',
+        title: '🚀 Աուդիո մարտահրավեր',
+        hint: '🎭 "May the Force be with you"',
+        answer: 'Star Wars (1977)',
+        year: 1977,
+        points: 350,
+        media: {
             type: 'audio',
-            title: '🎧 Հայկական տոնական երգ',
-            hint: '«Ամանոր, ամանոր, դու եկար նորից...»',
-            answer: 'Ամանոր - Արմեն Խուդիկյան',
-            year: 1970,
-            points: 200,
-            media: {
-                type: 'youtube',
-                url: 'https://www.youtube.com/embed/3vJ6KpX5Q7o',
-            },
-            funFact: 'Այս երգը դարձել է ամանորյան անպայման ատրիբուտ',
-            category: 'armenia',
-            difficulty: 'medium'
-        }
-    ];
+            url: '/audio/star-wars.mp3',
+        },
+        funFact: 'Այս արտահայտությունը մտել է համաշխարհային մշակույթ',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 5,
+        type: 'emoji',
+        title: '🏰 Էմոջի հանելուկ',
+        hint: '👸 🐸 💋 👑',
+        answer: 'Shrek (2001)',
+        year: 2001,
+        points: 300,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWFlNGVoa2doN2lpeHhhODlxdXl4aWUwb3g0Y2M5ZGtubHdwdmc1byZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TIGP3k4gNAqvza2KJK/giphy.gif',
+        },
+        funFact: 'Շրեկը առաջին անիմացիոն ֆիլմն էր, որը շահել է Օսկար լավագույն անիմացիոն ֆիլմի համար',
+        category: 'animation',
+        difficulty: 'easy'
+    },
+    {
+        id: 6,
+        type: 'audio',
+        title: '💍 Լսեք այս ձայնագրությունը',
+        hint: '🧝‍♂️ 🏔️ 🔥 👁️ "My precious..."',
+        answer: 'The Lord of the Rings (2001)',
+        year: 2001,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/lotr.mp3',
+        },
+        funFact: 'Գոլլումի կերպարը ստեղծվել է մotion capture տեխնոլոգիայով',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 7,
+        type: 'emoji',
+        title: '👻 Էմոջի մարտահրավեր',
+        hint: '🏠 👻 👦 📺 👧',
+        answer: 'The Conjuring (2013)',
+        year: 2013,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3o3b2t5MngwNG51bXpsbGc3MzdvZHRlZWllZGFwZ2I1ZjNnY2tlbSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/14gMQooJnqfxF6/giphy.gif',
+        },
+        funFact: 'Ֆիլմը հիմնված է իրական պատմության վրա',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 8,
+        type: 'audio',
+        title: '🎶 Հայտնի արտահայտություն',
+        hint: '😎 "I\'m the king of the world!"',
+        answer: 'Titanic (1997)',
+        year: 1997,
+        points: 300,
+        media: {
+            type: 'audio',
+            url: '/audio/titanic-king.mp3',
+        },
+        funFact: 'Լեոնարդո ԴիԿապրիոն իմպրովիզացրել է այս տողը',
+        category: 'hollywood',
+        difficulty: 'easy'
+    },
+    {
+        id: 9,
+        type: 'emoji',
+        title: '🦸 Էմոջի սուպերհերոս',
+        hint: '🕷️ 👨 🕸️ 🏙️',
+        answer: 'Spider-Man (2002)',
+        year: 2002,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM245andldHQ1ODBpYXpyOWx3dGtxYXc4aTZ1YXBqeHp6dHNkZ3ZsdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TgJ5vkzjcK0dqvN5hs/giphy.gif',
+        },
+        funFact: 'Սարդ-մարդը ամենահայտնի կոմիքսների հերոսներից է',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 10,
+        type: 'audio',
+        title: '🎭 Լսեք և գուշակեք',
+        hint: '⚖️ "You can\'t handle the truth!"',
+        answer: 'A Few Good Men (1992)',
+        year: 1992,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/few-good-men.mp3',
+        },
+        funFact: 'Ջեք Նիկոլսոնի կատարումը այս տեսարանում համարվում է լեգենդար',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 11,
+        type: 'emoji',
+        title: '🔫 Էմոջի գանգստեր',
+        hint: '👨 👨 🔫 🚗 💰',
+        answer: 'Pulp Fiction (1994)',
+        year: 1994,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVjOW9oa2d1bHJ0MTI3MzM3bmN1cTl6enJoMGF0OHJoNDJ0ZWNoZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/afKR3RpmJVf32/giphy.gif',
+        },
+        funFact: 'Ֆիլմը հայտնի է իր ոչ գծային պատմությամբ',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 12,
+        type: 'audio',
+        title: '🤖 Մեքենայի ձայն',
+        hint: '🚗 "I\'ll be back"',
+        answer: 'The Terminator (1984)',
+        year: 1984,
+        points: 350,
+        media: {
+            type: 'audio',
+            url: '/audio/terminator.mp3',
+        },
+        funFact: 'Այս տողը դարձել է Առնոլդ Շվարցենեգերի կարգախոսը',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 13,
+        type: 'emoji',
+        title: '🧙 Էմոջի մոգություն',
+        hint: '👦 ⚡ 🏰 🧹',
+        answer: 'Harry Potter (2001)',
+        year: 2001,
+        points: 400,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjJncTlmbzF4dWljcHE0Ym9zdTJnOXp0NWJiMzgxeGJ2dHExeHZ1diZlcD12MV9naWZzX3NlYXJjaCZjdD1n/qPCln5TSOsdRS/giphy.gif',
+        },
+        funFact: 'Հարրի Փոթերը ամենաշահութաբեր ֆիլմաշարերից է',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 14,
+        type: 'audio',
+        title: '🎪 Անհատականություն խաղալ',
+        hint: '🤡 "Why so serious?"',
+        answer: 'The Dark Knight (2008)',
+        year: 2008,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/joker.mp3',
+        },
+        funFact: 'Հիթ Լեդջերի Ջոկերը համարվում է բոլոր ժամանակների լավագույն կինոհերոսներից',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 15,
+        type: 'emoji',
+        title: '👽 Էմոջի այլմոլորակային',
+        hint: '🚲 🌕 🌌 👦',
+        answer: 'E.T. the Extra-Terrestrial (1982)',
+        year: 1982,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdHF6c3VpMW16c3hxZjhibndnMjhqMW1jd3FhZHF4OWFzZ2VwazlkMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Y4sSj9fwwBCoOymZF8/giphy.gif',
+        },
+        funFact: 'E.T.-ի ձայնը ստեղծվել է մի քանի կենդանիների ձայների միախառնումից',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 16,
+        type: 'audio',
+        title: '🏡 Տուն վերադառնալու մասին',
+        hint: '🔮 "There\'s no place like home"',
+        answer: 'The Wizard of Oz (1939)',
+        year: 1939,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/wizard-oz.mp3',
+        },
+        funFact: 'Ֆիլմն առաջիններից էր, որ օգտագործեց գունավոր ֆիլմի տեխնոլոգիա',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 17,
+        type: 'emoji',
+        title: '🎮 Էմոջի կիբերհերոս',
+        hint: '👨 💊 🔴 🔵',
+        answer: 'The Matrix (1999)',
+        year: 1999,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3VtN2VmZW1wYmJlZm9tOGttZHVuNzRkZDBsbm96Y295enAzMnkyeSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ZE6AcAmSfWSEV9KTqy/giphy.gif',
+        },
+        funFact: '"Կրակից խուսափելու" տեսարանի համար օգտագործվել է հատուկ տեխնոլոգիա',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 18,
+        type: 'audio',
+        title: '👻 Մեռած մարդիկ տեսնել',
+        hint: '🎶 "I see dead people"',
+        answer: 'The Sixth Sense (1999)',
+        year: 1999,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/sixth-sense.mp3',
+        },
+        funFact: 'Ֆիլմի վերջնաբանը համարվում է կինոյի պատմության լավագույն անակնկալներից',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 19,
+        type: 'emoji',
+        title: '🦁 Էմոջի թագավոր',
+        hint: '👑 🦁 🌅 👨',
+        answer: 'The Lion King (1994)',
+        year: 1994,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExenE1YXRybnphMHd1eXFnbmM1OG8zMzQ4cG53Zmlqc3FlcnV3cXh1cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Nm4eUOt3074Ck/giphy.gif',
+        },
+        funFact: 'Մուլտֆիլմի սաունդթրեքը ստացել է 2 Օսկար',
+        category: 'animation',
+        difficulty: 'medium'
+    },
+    {
+        id: 20,
+        type: 'audio',
+        title: '💰 Փող ցույց տուր',
+        hint: '💼 "Show me the money!"',
+        answer: 'Jerry Maguire (1996)',
+        year: 1996,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/jerry-maguire.mp3',
+        },
+        funFact: 'Այս տողը դարձել է բիզնես աշխարհի կարգախոս',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 21,
+        type: 'emoji',
+        title: '👰 Էմոջի հարսանիք',
+        hint: '👰 🤵 🏃 💥',
+        answer: 'The Princess Bride (1987)',
+        year: 1987,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExajJuZHljM3VpNDg3Z2VhcnJ0eWl0ZWhsYjVoMDl0ejF5ajk5ZDlsZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/gnLOUM0S93JU4/giphy.gif',
+        },
+        funFact: 'Ֆիլմը ժամանակին հաջողություն չի ունեցել, բայց հետագայում դարձել է կուլտային',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 22,
+        type: 'audio',
+        title: '❤️ Բարևից սեր',
+        hint: '🎭 "You had me at hello"',
+        answer: 'Jerry Maguire (1996)',
+        year: 1996,
+        points: 300,
+        media: {
+            type: 'audio',
+            url: '/audio/hello-love.mp3',
+        },
+        funFact: 'Այս տեսարանը համարվում է ռոմանտիկ կինոյի լեգենդար տեսարան',
+        category: 'hollywood',
+        difficulty: 'easy'
+    },
+    {
+        id: 23,
+        type: 'emoji',
+        title: '🏝️ Էմոջի կղզի',
+        hint: '👨 🏝️ 🏐',
+        answer: 'Cast Away (2000)',
+        year: 2000,
+        points: 400,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcG8zOHFhcnVxNnF0d2Vsb3pyMm9wOGw3cDRqM3FxM2xud3V1YWVrbSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/1e7Hb37Sfn9BK/giphy.gif',
+        },
+        funFact: 'Թոմ Հենքսը նկարահանումների համար կորցրել է 20 կգ',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 24,
+        type: 'audio',
+        title: '🚪 Ջոնիի հայտարարություն',
+        hint: '🏨 "Here\'s Johnny!"',
+        answer: 'The Shining (1980)',
+        year: 1980,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/heres-johnny.mp3',
+        },
+        funFact: 'Ջեք Նիկոլսոնը իմպրովիզացրել է այս տողը',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 25,
+        type: 'emoji',
+        title: '🕵️ Էմոջի դետեկտիվ',
+        hint: '👨 🕵️ 🔍 🌃',
+        answer: 'Se7en (1995)',
+        year: 1995,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzdtZjJnNXNleXo5cmIyZWIwamlmMWhrc251dWRsZWZxa2N0N29lZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/w3WMVd8P8mELe/giphy.gif',
+        },
+        funFact: 'Ֆիլմի վերջնաբանը համարվում է ամենահիշվողներից մեկը',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 26,
+        type: 'audio',
+        title: '🥤 Շաքարապատ ջուր',
+        hint: '🏆 "I drink your milkshake!"',
+        answer: 'There Will Be Blood (2007)',
+        year: 2007,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/milkshake.mp3',
+        },
+        funFact: 'Դանիել Դեյ-Լյուիսը ստացել է Օսկար լավագույն դերասանի համար',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 27,
+        type: 'emoji',
+        title: '👑 Էմոջի թագուհի',
+        hint: '👸 🍎 😴 💋',
+        answer: 'Snow White (1937)',
+        year: 1937,
+        points: 300,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHd5YXBvMmYyNWN6NndwOG04OW1kOXZ6NWJxZnptanlwMjA4NjhrdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/AhAysobj49aqQ/giphy.gif',
+        },
+        funFact: 'Առաջին լիամետրաժ անիմացիոն ֆիլմն է',
+        category: 'animation',
+        difficulty: 'medium'
+    },
+    {
+        id: 28,
+        type: 'audio',
+        title: '🏊‍♂️ Լողալ շարունակել',
+        hint: '🌊 "Just keep swimming"',
+        answer: 'Finding Nemo (2003)',
+        year: 2003,
+        points: 350,
+        media: {
+            type: 'audio',
+            url: '/audio/keep-swimming.mp3',
+        },
+        funFact: 'Ֆիլմը օգնել է բարձրացնել ծովային կենդանիների պահպանության իրազեկվածությունը',
+        category: 'animation',
+        difficulty: 'medium'
+    },
+    {
+        id: 29,
+        type: 'emoji',
+        title: '🚀 Էմոջի տիեզերագնաց',
+        hint: '👨 🌍 🚀 ⏱️',
+        answer: 'Interstellar (2014)',
+        year: 2014,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZDVjdG13aW4zdmc5dGZucnR5OW81bXg2bTFkNTllMTBpYWpjZTBncyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/LP34YoHBzwvageVyD2/giphy.gif',
+        },
+        funFact: 'Ֆիլմի գիտական խորհրդատուն Նոբելյան մրցանակակիր Կիփ Թորնն էր',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 30,
+        type: 'audio',
+        title: '🚶 Ես այստեղ եմ քայլում',
+        hint: '🎭 "I\'m walking here!"',
+        answer: 'Midnight Cowboy (1969)',
+        year: 1969,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/walking-here.mp3',
+        },
+        funFact: 'Դասթին Հոֆմանը իմպրովիզացրել է այս տեսարանը',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 31,
+        type: 'emoji',
+        title: '💒 Էմոջի հարսանիք 2',
+        hint: '👰 🤵 👨 👩 💰',
+        answer: 'Crazy Rich Asians (2018)',
+        year: 2018,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGVhOXkzZWd5NDFoa2lsd2ttZWZ5cW5yY21wZjV2cWpkaTZjaWpudiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/bpTVXEhoraZK5dkG8t/giphy.gif',
+        },
+        funFact: '25 տարվա ընթացքում առաջին հոլիվուդյան ֆիլմը ասիացի դերասանների հետ',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 32,
+        type: 'audio',
+        title: '✈️ Արագության անհրաժեշտություն',
+        hint: '🎶 "I feel the need... the need for speed!"',
+        answer: 'Top Gun (1986)',
+        year: 1986,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/need-for-speed.mp3',
+        },
+        funFact: 'Թոմ Քրուզն ինքնաթիռով թռիչքներ է կատարել ֆիլմի համար',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 33,
+        type: 'emoji',
+        title: '👑 Էմոջի թագավորություն',
+        hint: '👸 ❄️ ⛄ 🏰',
+        answer: 'Frozen (2013)',
+        year: 2013,
+        points: 300,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTFpN3Nyb3IwMGZkeTF6bjV1dHU1aTVqZnE1dHBvOGExM2Njc25lZCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/UKWxgdvYH2iCA/giphy.gif',
+        },
+        funFact: '"Let It Go" երգը դարձել է համաշխարհային հիթ',
+        category: 'animation',
+        difficulty: 'easy'
+    },
+    {
+        id: 34,
+        type: 'audio',
+        title: '📦 Ի՞նչ կա արկղում',
+        hint: '🔪 "What\'s in the box?!"',
+        answer: 'Se7en (1995)',
+        year: 1995,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/whats-in-box.mp3',
+        },
+        funFact: 'Ֆիլմի վերջնաբանը խիստ վիճելի էր, բայց դարձավ լեգենդար',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 35,
+        type: 'emoji',
+        title: '🏙️ Էմոջի մեգապոլիս',
+        hint: '🦇 🌃 🚗',
+        answer: 'Batman (1989)',
+        year: 1989,
+        points: 400,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZWtnaHNxcHI0NGI5Ymk3ZXNqYXppcmNicjV6MXNxdnN2OHRhNmlnNyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/B4jfJqiIxvU08/giphy.gif',
+        },
+        funFact: 'Մայքլ Քիթոնը առաջին դերասանն էր, ով խաղաց Բեթմենի դերը ժամանակակից կինոյում',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 36,
+        type: 'audio',
+        title: '👊 Մենամարտի ակումբի կանոն',
+        hint: '🎮 "The first rule of Fight Club is..."',
+        answer: 'Fight Club (1999)',
+        year: 1999,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/fight-club.mp3',
+        },
+        funFact: 'Ֆիլմի ինտերնետային ֆան ակումբը նախապես խախտել է ֆիլմի գաղտնիության կանոնը',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 37,
+        type: 'emoji',
+        title: '🎭 Էմոջի երաժշտություն',
+        hint: '🎵 🎭 😢',
+        answer: 'La La Land (2016)',
+        year: 2016,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3bXJ1a2YyZzcwaDUwOG96c2oyaWtzN2h0b3E1dXp2cXk5bWM4MTZoZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xUA7b3v67J4zaqi6GI/giphy.gif',
+        },
+        funFact: 'Ֆիլմը ստացել է 6 Օսկար',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 38,
+        type: 'audio',
+        title: '👢 Կոշիկում օձ',
+        hint: '🎩 "There\'s a snake in my boot!"',
+        answer: 'Toy Story (1995)',
+        year: 1995,
+        points: 300,
+        media: {
+            type: 'audio',
+            url: '/audio/snake-boot.mp3',
+        },
+        funFact: 'Առաջին լիամետրաժ համակարգչային անիմացիոն ֆիլմն է',
+        category: 'animation',
+        difficulty: 'easy'
+    },
+    {
+        id: 39,
+        type: 'emoji',
+        title: '🌍 Էմոջի ապոկալիպսիս',
+        hint: '💥 🌍 👨 👩',
+        answer: '2012 (2009)',
+        year: 2009,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://makeagif.com/i/LWIooc',
+        },
+        funFact: 'Ֆիլմը օգտագործել է հսկայական քանակությամբ տեսողական էֆեկտներ',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 40,
+        type: 'audio',
+        title: '🧙 Անցման արգելք',
+        hint: '🧙‍♂️ "You shall not pass!"',
+        answer: 'The Lord of the Rings (2001)',
+        year: 2001,
+        points: 400,
+        media: {
+            type: 'audio',
+            url: '/audio/you-shall-not-pass.mp3',
+        },
+        funFact: 'Գենդալֆի այս արտահայտությունը դարձել է ինտերնետ-մեմ',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 41,
+        type: 'emoji',
+        title: '🎲 Էմոջի կազինո',
+        hint: '👨 👩 🎲 💰',
+        answer: 'Casino Royale (2006)',
+        year: 2006,
+        points: 400,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnZjejVicGo0c2RpNGV0OXcwYXd5MjVmaGU1M3ZtNnVhZXo5NTE1diZlcD12MV9naWZzX3NlYXJjaCZjdD1n/OGVVyEQwcaxRS/giphy.gif',
+        },
+        funFact: 'Դենիել Քրեյգի առաջին ֆիլմը որպես Ջեյմս Բոնդ',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 42,
+        type: 'audio',
+        title: '🔫 Ընկերոջը բարևել',
+        hint: '👨 "Say hello to my little friend!"',
+        answer: 'Scarface (1983)',
+        year: 1983,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/little-friend.mp3',
+        },
+        funFact: 'Ֆիլմը համարվում է գանգստերական ֆիլմերի դասական',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 43,
+        type: 'emoji',
+        title: '👽 Էմոջի այլմոլորակայիններ',
+        hint: '👽 🌍 🛸',
+        answer: 'Independence Day (1996)',
+        year: 1996,
+        points: 350,
+        media: {
+            type: 'giphy',
+            url: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExb2N3MDd4cW1jOGQya3NqbWZjZDU2Z2szMDJhNXhicHlpbzhzZnN2OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26BRwtmWTmy2xsbmg/giphy.gif',
+        },
+        funFact: 'Ֆիլմի "Գիտակցության օր" ճառը համարվում է կինոյի լավագույն ճառերից',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 44,
+        type: 'audio',
+        title: '🏰 Որպես ցանկանաս',
+        hint: '🎭 "As you wish"',
+        answer: 'The Princess Bride (1987)',
+        year: 1987,
+        points: 350,
+        media: {
+            type: 'audio',
+            url: '/audio/as-you-wish.mp3',
+        },
+        funFact: 'Այս տողը ֆիլմում հայտնվում է բազմիցս և ունի խորը իմաստ',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 45,
+        type: 'emoji',
+        title: '🎭 Էմոջի շոու',
+        hint: '🎪 👨 🎭',
+        answer: 'The Greatest Showman (2017)',
+        year: 2017,
+        points: 300,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdGxwM3k0N2lsbWppcjkwbnFhbWMxMTZmc2s4cmt3OTNxeWFwd2x1eiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/7JduIzmjDhw92qtFaa/giphy.gif',
+        },
+        funFact: 'Ֆիլմի սաունդթրեքը գլխավորել է ալբոմների չարթերը ամբողջ աշխարհում',
+        category: 'hollywood',
+        difficulty: 'medium'
+    },
+    {
+        id: 46,
+        type: 'audio',
+        title: '🚀 Անսահմանությունից այն կողմ',
+        hint: '🧸 "To infinity and beyond!"',
+        answer: 'Toy Story (1995)',
+        year: 1995,
+        points: 300,
+        media: {
+            type: 'audio',
+            url: '/audio/infinity-beyond.mp3',
+        },
+        funFact: 'Բազ Լայթյերի այս արտահայտությունը դարձել է Դիսնեյի խորհրդանիշ',
+        category: 'animation',
+        difficulty: 'easy'
+    },
+    {
+        id: 47,
+        type: 'emoji',
+        title: '🌃 Էմոջի գիշերային կյանք',
+        hint: '🌃 💃 🎶',
+        answer: 'Saturday Night Fever (1977)',
+        year: 1977,
+        points: 400,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3kxczR4anFnanhzOW10Zjd3OWRxMGY3bDViZGJlMjY0dHltZXA2OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l41Yh18f5TbiWHE0o/giphy.gif',
+        },
+        funFact: 'Ջոն Տրավոլտայի պարը դարձել է 1970-ականների խորհրդանիշ',
+        category: 'hollywood',
+        difficulty: 'hard'
+    },
+    {
+        id: 48,
+        type: 'audio',
+        title: '🎳 Ես այն տղան եմ',
+        hint: '🎭 "I\'m the Dude. So that\'s what you call me."',
+        answer: 'The Big Lebowski (1998)',
+        year: 1998,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/the-dude.mp3',
+        },
+        funFact: 'Ֆիլմը հետագայում դարձել է կուլտային և ունի իր սեփական փառատոնները',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 49,
+        type: 'emoji',
+        title: '🎪 Էմոջի կրկես',
+        hint: '🤡 🎪 😢',
+        answer: 'Joker (2019)',
+        year: 2019,
+        points: 450,
+        media: {
+            type: 'giphy',
+            url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMDZlNnd4cmF1ZXFub2pxZHVhZjVoazJydnk3NXBhdWs0emkxdTdnayZlcD12MV9naWZzX3NlYXJjaCZjdD1n/A363LZlQaX0ZO/giphy.gif',
+        },
+        funFact: 'Հոկին Ֆենիքսը նիհարել է 24 կգ ֆիլմի համար',
+        category: 'hollywood',
+        difficulty: 'expert'
+    },
+    {
+        id: 50,
+        type: 'audio',
+        title: '🔥 Նապալմի հոտ',
+        hint: '🎬 "I love the smell of napalm in the morning"',
+        answer: 'Apocalypse Now (1979)',
+        year: 1979,
+        points: 450,
+        media: {
+            type: 'audio',
+            url: '/audio/napalm-smell.mp3',
+        },
+        funFact: 'Ֆիլմի նկարահանումները տևել են ավելի քան 1 տարի',
+        category: 'hollywood',
+        difficulty: 'expert'
+    }
+];
 
     const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>(questions);
     const [answerOptions, setAnswerOptions] = useState<string[]>([]);
