@@ -182,7 +182,7 @@ const NewYearCharades = () => {
     const [mood, setMood] = useState<Mood>('neutral');
     const [particles, setParticles] = useState<Particle[]>([]);
     const [ambientSounds, setAmbientSounds] = useState(true);
-    
+
     // Состояния для управления командами и игроками
     const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
     const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -304,47 +304,47 @@ const NewYearCharades = () => {
     };
 
     const difficultySettings: Record<Difficulty, DifficultySetting> = {
-        easy: { 
-            time: 90, 
-            points: 1, 
-            label: 'Հեշտ', 
-            color: 'from-green-400 to-emerald-500', 
+        easy: {
+            time: 90,
+            points: 1,
+            label: 'Հեշտ',
+            color: 'from-green-400 to-emerald-500',
             icon: '😊',
             multiplier: 0.8,
             description: 'Իդեալական սկսնակների համար'
         },
-        medium: { 
-            time: 60, 
-            points: 2, 
-            label: 'Միջին', 
-            color: 'from-yellow-400 to-orange-500', 
+        medium: {
+            time: 60,
+            points: 2,
+            label: 'Միջին',
+            color: 'from-yellow-400 to-orange-500',
             icon: '😎',
             multiplier: 1.0,
             description: 'Հավասարակշռված բարդություն'
         },
-        hard: { 
-            time: 45, 
-            points: 3, 
-            label: 'Բարդ', 
-            color: 'from-orange-500 to-red-600', 
+        hard: {
+            time: 45,
+            points: 3,
+            label: 'Բարդ',
+            color: 'from-orange-500 to-red-600',
             icon: '🔥',
             multiplier: 1.3,
             description: 'Փորձառու խաղացողների համար'
         },
-        expert: { 
-            time: 30, 
-            points: 5, 
-            label: 'Փորձառու', 
-            color: 'from-red-600 to-purple-700', 
+        expert: {
+            time: 30,
+            points: 5,
+            label: 'Փորձառու',
+            color: 'from-red-600 to-purple-700',
             icon: '💀',
             multiplier: 1.7,
             description: 'Ճշգրիտ ռեակցիա և մտածողություն'
         },
-        insane: { 
-            time: 15, 
-            points: 8, 
-            label: 'Խելագար', 
-            color: 'from-purple-700 to-pink-700', 
+        insane: {
+            time: 15,
+            points: 8,
+            label: 'Խելագար',
+            color: 'from-purple-700 to-pink-700',
             icon: '👿',
             multiplier: 2.2,
             description: 'Մաքսիմալ մարտահրավեր'
@@ -390,67 +390,67 @@ const NewYearCharades = () => {
     };
 
     const specialCardTypes: SpecialCard[] = [
-        { 
-            type: 'joker', 
-            name: 'Ջոքեր', 
-            emoji: '🃏', 
-            description: 'Մեկ հուշում', 
+        {
+            type: 'joker',
+            name: 'Ջոքեր',
+            emoji: '🃏',
+            description: 'Մեկ հուշում',
             color: 'from-purple-500 to-pink-500',
             effect: 'Արտահայտություն մեկ բառով'
         },
-        { 
-            type: 'freeze', 
-            name: 'Սառեցում', 
-            emoji: '❄️', 
-            description: '+15 վրկ', 
+        {
+            type: 'freeze',
+            name: 'Սառեցում',
+            emoji: '❄️',
+            description: '+15 վրկ',
             color: 'from-cyan-400 to-blue-500',
             effect: 'Ժամանակի ընդլայնում'
         },
-        { 
-            type: 'double', 
-            name: 'Կրկնակի', 
-            emoji: '✨', 
-            description: 'Կրկնակի միավորներ', 
+        {
+            type: 'double',
+            name: 'Կրկնակի',
+            emoji: '✨',
+            description: 'Կրկնակի միավորներ',
             color: 'from-yellow-400 to-orange-500',
             effect: 'Միավորների բազմապատկում'
         },
-        { 
-            type: 'swap', 
-            name: 'Փոխանակում', 
-            emoji: '🔄', 
-            description: 'Փոխել բառը', 
+        {
+            type: 'swap',
+            name: 'Փոխանակում',
+            emoji: '🔄',
+            description: 'Փոխել բառը',
             color: 'from-green-400 to-emerald-500',
             effect: 'Նոր բառ ստանալ'
         },
-        { 
-            type: 'shield', 
-            name: 'Վահան', 
-            emoji: '🛡️', 
-            description: 'Պաշտպանություն տուգանքից', 
+        {
+            type: 'shield',
+            name: 'Վահան',
+            emoji: '🛡️',
+            description: 'Պաշտպանություն տուգանքից',
             color: 'from-blue-500 to-indigo-600',
             effect: 'Տուգանքներից պաշտպանություն'
         },
-        { 
-            type: 'bomb', 
-            name: 'Ռումբ', 
-            emoji: '💣', 
-            description: '-10 վրկ հակառակորդին', 
+        {
+            type: 'bomb',
+            name: 'Ռումբ',
+            emoji: '💣',
+            description: '-10 վրկ հակառակորդին',
             color: 'from-red-500 to-orange-600',
             effect: 'Հակառակորդի ժամանակի կրճատում'
         },
-        { 
-            type: 'vision', 
-            name: 'Տեսլական', 
-            emoji: '👁️', 
-            description: 'Ցույց տալ կատեգորիան', 
+        {
+            type: 'vision',
+            name: 'Տեսլական',
+            emoji: '👁️',
+            description: 'Ցույց տալ կատեգորիան',
             color: 'from-indigo-500 to-purple-600',
             effect: 'Կատեգորիայի բացահայտում'
         },
-        { 
-            type: 'bonus', 
-            name: 'Բոնուս', 
-            emoji: '💰', 
-            description: '+3 միավոր', 
+        {
+            type: 'bonus',
+            name: 'Բոնուս',
+            emoji: '💰',
+            description: '+3 միավոր',
             color: 'from-amber-400 to-yellow-500',
             effect: 'Անմիջական միավորներ'
         }
@@ -492,10 +492,10 @@ const NewYearCharades = () => {
             players: team.players.filter(p => p.id !== playerId),
             captain: team.captain?.id === playerId ? (team.players.length > 1 ? team.players.find(p => p.id !== playerId) || null : null) : team.captain
         })));
-        
+
         // Удаляем игрока из списка доступных
         setAvailablePlayers(prev => prev.filter(p => p.id !== playerId));
-        
+
         if (soundEnabled) playClick();
     };
 
@@ -539,7 +539,7 @@ const NewYearCharades = () => {
         setTeams(prev => [...prev, newTeam]);
         setNewTeamName('');
         setSelectedTeamColor(0);
-        
+
         if (soundEnabled) playSpecial();
     };
 
@@ -596,12 +596,12 @@ const NewYearCharades = () => {
         // Возвращаем игроков команды в список доступных
         const teamToDelete = teams.find(team => team.id === teamId);
         if (teamToDelete) {
-            const playersToReturn = teamToDelete.players.filter(player => 
+            const playersToReturn = teamToDelete.players.filter(player =>
                 !teams.some(t => t.id !== teamId && t.players.some(p => p.id === player.id))
             );
             setAvailablePlayers(prev => [...prev, ...playersToReturn]);
         }
-        
+
         setTeams(prev => prev.filter(team => team.id !== teamId));
         if (soundEnabled) playClick();
     };
@@ -614,6 +614,12 @@ const NewYearCharades = () => {
 
         if (teams.some(team => team.players.length === 0)) {
             alert('Բոլոր թիմերը պետք է ունենան առնվազն 1 խաղացող');
+            return;
+        }
+
+        const totalPlayers = teams.reduce((sum, team) => sum + team.players.length, 0);
+        if (totalPlayers < 4) {
+            alert('Ընդհանուր առնվազն 4 խաղացող պետք է լինի բոլոր թիմերում');
             return;
         }
 
@@ -649,7 +655,7 @@ const NewYearCharades = () => {
                 `Ստեղծեք ասոցիացիաներ կատեգորիայի հետ`
             ]
         };
-        
+
         return hints[difficultyLevel as keyof typeof hints] || hints.medium;
     };
 
@@ -746,10 +752,10 @@ const NewYearCharades = () => {
         let selectedCategory: string;
         if (aiAssistant && teams[currentTeam]) {
             const teamEfficiency = teams[currentTeam].correctGuesses / (teams[currentTeam].correctGuesses + teams[currentTeam].skippedWords) || 0.5;
-            const appropriateCategories = availableCategories.filter(cat => 
+            const appropriateCategories = availableCategories.filter(cat =>
                 categories[cat].difficulty <= Math.ceil(teamEfficiency * 5)
             );
-            selectedCategory = appropriateCategories.length > 0 
+            selectedCategory = appropriateCategories.length > 0
                 ? appropriateCategories[Math.floor(Math.random() * appropriateCategories.length)]
                 : availableCategories[Math.floor(Math.random() * availableCategories.length)];
         } else {
@@ -768,13 +774,13 @@ const NewYearCharades = () => {
         });
         setTimeLeft(difficultySettings[difficulty].time);
         setStats(prev => ({ ...prev, totalWords: prev.totalWords + 1 }));
-        
+
         if (soundEnabled) playCardFlip();
     };
 
     const handleCorrect = () => {
         if (!currentCard) return;
-        
+
         const timeTaken = difficultySettings[difficulty].time - timeLeft;
         const basePoints = difficultySettings[difficulty].points;
         let multiplier = difficultySettings[difficulty].multiplier;
@@ -836,26 +842,26 @@ const NewYearCharades = () => {
         setStats(prev => {
             const totalTime = prev.history.reduce((sum, item) => sum + item.time, 0) + timeTaken;
             const avgTime = totalTime / (prev.history.length + 1);
-            const newStats: Stats = { 
-                ...prev, 
+            const newStats: Stats = {
+                ...prev,
                 history: [...prev.history, newHistory],
                 avgTime: Math.round(avgTime * 100) / 100
             };
 
             if (!newStats.fastestGuess || timeTaken < newStats.fastestGuess.time) {
-                newStats.fastestGuess = { 
-                    team: teams[currentTeam].name, 
-                    time: timeTaken, 
+                newStats.fastestGuess = {
+                    team: teams[currentTeam].name,
+                    time: timeTaken,
                     word: currentCard.word,
-                    points: points 
+                    points: points
                 };
             }
 
             if (!newStats.slowestGuess || timeTaken > newStats.slowestGuess.time) {
-                newStats.slowestGuess = { 
-                    team: teams[currentTeam].name, 
-                    time: timeTaken, 
-                    word: currentCard.word 
+                newStats.slowestGuess = {
+                    team: teams[currentTeam].name,
+                    time: timeTaken,
+                    word: currentCard.word
                 };
             }
 
@@ -875,14 +881,14 @@ const NewYearCharades = () => {
         setStreak(0);
         setCombo(0);
         setMood('sad');
-        
+
         if (soundEnabled) playIncorrect();
 
         const updatedTeams = teams.map((team, idx) => {
             if (idx === currentTeam) {
-                return { 
-                    ...team, 
-                    skippedWords: team.skippedWords + 1, 
+                return {
+                    ...team,
+                    skippedWords: team.skippedWords + 1,
                     streak: 0,
                     lastAction: { type: 'skip', time: Date.now() }
                 };
@@ -892,14 +898,14 @@ const NewYearCharades = () => {
 
         setTeams(updatedTeams);
         setStats(prev => ({ ...prev, skippedWords: prev.skippedWords + 1 }));
-        
+
         // AI suggests a hint if skipping too much
         if (aiAssistant && teams[currentTeam]?.skippedWords > 2) {
             setTimeout(() => {
                 alert(`🤖 AI առաջարկ. Փորձեք օգտագործել հատուկ քարտեր կամ խնդրեք թիմից օգնություն։`);
             }, 500);
         }
-        
+
         nextTurn();
     };
 
@@ -908,47 +914,47 @@ const NewYearCharades = () => {
         const team = teams[currentTeam];
 
         if (timeTaken < 3) {
-            newAchievements.push({ 
-                name: 'Մտքի կայծակ', 
-                emoji: '⚡', 
+            newAchievements.push({
+                name: 'Մտքի կայծակ',
+                emoji: '⚡',
                 description: 'Գուշակվել է 3 վայրկյանում!',
-                points: 50 
+                points: 50
             });
         }
 
         if (streak >= 10) {
-            newAchievements.push({ 
-                name: 'Անհաղթահարելի', 
-                emoji: '🏆', 
+            newAchievements.push({
+                name: 'Անհաղթահարելի',
+                emoji: '🏆',
                 description: '10 ճիշտ պատասխան անընդմեջ!',
-                points: 100 
+                points: 100
             });
         }
 
         if (team.score >= pointsToWin && gameMode === 'tournament') {
-            newAchievements.push({ 
-                name: 'Չեմպիոն', 
-                emoji: '👑', 
+            newAchievements.push({
+                name: 'Չեմպիոն',
+                emoji: '👑',
                 description: 'Հասել եք նպատակային միավորներին!',
-                points: 200 
+                points: 200
             });
         }
 
         if (points > 15) {
-            newAchievements.push({ 
-                name: 'Մեծ միավոր', 
-                emoji: '💎', 
+            newAchievements.push({
+                name: 'Մեծ միավոր',
+                emoji: '💎',
                 description: `Ստացել եք ${points} միավոր մեկ բառից!`,
-                points: 30 
+                points: 30
             });
         }
 
         if (team.efficiency > 90) {
-            newAchievements.push({ 
-                name: 'Կատարելատիպ', 
-                emoji: '🎯', 
+            newAchievements.push({
+                name: 'Կատարելատիպ',
+                emoji: '🎯',
                 description: '90%+ արդյունավետություն',
-                points: 75 
+                points: 75
             });
         }
 
@@ -1036,7 +1042,7 @@ const NewYearCharades = () => {
                 break;
             case 'bomb':
                 const nextTeamIdx = (currentTeam + 1) % teams.length;
-                setTeams(prev => prev.map((team, idx) => 
+                setTeams(prev => prev.map((team, idx) =>
                     idx === nextTeamIdx ? { ...team, score: Math.max(0, team.score - 5) } : team
                 ));
                 alert(`💣 Ռումբ ուղարկվել է ${teams[nextTeamIdx].name} թիմին! -5 միավոր`);
@@ -1060,20 +1066,20 @@ const NewYearCharades = () => {
     const endGame = () => {
         const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
         const winner = sortedTeams[0];
-        
-        setStats(prev => ({ 
-            ...prev, 
+
+        setStats(prev => ({
+            ...prev,
             bestPlayer: sortedTeams.sort((a, b) => b.correctGuesses - a.correctGuesses)[0].name,
             totalTime: prev.history.reduce((sum, item) => sum + item.time, 0)
         }));
-        
+
         setGameState('results');
         setShowFireworks(true);
         setShowSnow(true);
-        
+
         if (soundEnabled) playWin();
         generateParticles('celebration', 100);
-        
+
         setTimeout(() => {
             setShowFireworks(false);
             setShowSnow(false);
@@ -1189,7 +1195,7 @@ const NewYearCharades = () => {
                     <FireworksEffect />
                     <SnowEffect />
                     <ParticleEffect type="sparkle" />
-                    
+
                     <div className="absolute top-4 right-4 flex gap-2 z-50">
                         <button
                             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -1201,9 +1207,9 @@ const NewYearCharades = () => {
                             onClick={() => setTheme(theme === 'night' ? 'aurora' : theme === 'aurora' ? 'fire' : 'night')}
                             className="p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
                         >
-                            {theme === 'night' ? <Moon className="w-6 h-6 text-white" /> : 
-                             theme === 'aurora' ? <CloudRain className="w-6 h-6 text-white" /> : 
-                             <BrickWallFire className="w-6 h-6 text-white" />}
+                            {theme === 'night' ? <Moon className="w-6 h-6 text-white" /> :
+                                theme === 'aurora' ? <CloudRain className="w-6 h-6 text-white" /> :
+                                    <BrickWallFire className="w-6 h-6 text-white" />}
                         </button>
                         <button
                             onClick={() => setAiAssistant(!aiAssistant)}
@@ -1254,8 +1260,8 @@ const NewYearCharades = () => {
                                         if (soundEnabled) playClick();
                                     }}
                                     className={`p-6 rounded-2xl transition-all transform hover:scale-105 border-2 hover:shadow-2xl ${gameMode === key
-                                            ? 'border-white bg-gradient-to-r ' + mode.color + ' shadow-2xl'
-                                            : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                        ? 'border-white bg-gradient-to-r ' + mode.color + ' shadow-2xl'
+                                        : 'border-white/20 bg-white/5 hover:bg-white/10'
                                         }`}
                                 >
                                     <div className="flex items-start gap-4">
@@ -1350,8 +1356,8 @@ const NewYearCharades = () => {
                                             if (soundEnabled) playClick();
                                         }}
                                         className={`p-4 rounded-xl transition-all transform hover:scale-105 ${difficulty === key
-                                                ? `bg-gradient-to-r ${value.color} text-white shadow-xl scale-105`
-                                                : 'bg-white/10 text-white hover:bg-white/20'
+                                            ? `bg-gradient-to-r ${value.color} text-white shadow-xl scale-105`
+                                            : 'bg-white/10 text-white hover:bg-white/20'
                                             }`}
                                     >
                                         <div className="text-3xl mb-1">{value.icon}</div>
@@ -1398,8 +1404,8 @@ const NewYearCharades = () => {
                                         key={key}
                                         onClick={() => toggleCategory(key)}
                                         className={`p-4 rounded-xl transition-all transform hover:scale-105 relative ${selectedCategories.includes(key)
-                                                ? `bg-gradient-to-r ${cat.color} text-white shadow-xl`
-                                                : 'bg-white/10 text-white hover:bg-white/20'
+                                            ? `bg-gradient-to-r ${cat.color} text-white shadow-xl`
+                                            : 'bg-white/10 text-white hover:bg-white/20'
                                             }`}
                                     >
                                         {selectedCategories.includes(key) && (
@@ -1641,7 +1647,7 @@ const NewYearCharades = () => {
                                         <Users className="text-green-400" />
                                         Առկա Խաղացողներ ({filteredAvailablePlayers.length})
                                     </h3>
-                                    
+
                                     {filteredAvailablePlayers.length === 0 ? (
                                         <div className="text-center py-8 bg-white/5 rounded-xl">
                                             <div className="text-4xl mb-3">👤</div>
@@ -1651,8 +1657,8 @@ const NewYearCharades = () => {
                                     ) : (
                                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
                                             {filteredAvailablePlayers.map((player) => (
-                                                <div 
-                                                    key={player.id} 
+                                                <div
+                                                    key={player.id}
                                                     className="flex items-center justify-between bg-white/5 p-3 rounded-lg hover:bg-white/10 transition-all group"
                                                 >
                                                     <div className="flex items-center gap-3">
@@ -1698,7 +1704,7 @@ const NewYearCharades = () => {
                                         <Trophy className="text-yellow-400" />
                                         Ընթացիկ Թիմեր ({filteredTeams.length})
                                     </h3>
-                                    
+
                                     {filteredTeams.length === 0 ? (
                                         <div className="text-center py-12 bg-white/5 rounded-xl">
                                             <div className="text-6xl mb-4">👥</div>
@@ -1708,8 +1714,8 @@ const NewYearCharades = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {filteredTeams.map((team) => (
-                                                <div 
-                                                    key={team.id} 
+                                                <div
+                                                    key={team.id}
                                                     className="bg-white/5 rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all"
                                                 >
                                                     <div className="flex items-start justify-between mb-3">
@@ -1742,8 +1748,8 @@ const NewYearCharades = () => {
                                                         ) : (
                                                             <div className="space-y-1">
                                                                 {team.players.map(player => (
-                                                                    <div 
-                                                                        key={player.id} 
+                                                                    <div
+                                                                        key={player.id}
                                                                         className="flex items-center justify-between bg-white/5 p-2 rounded"
                                                                     >
                                                                         <div className="flex items-center gap-2">
@@ -1777,17 +1783,17 @@ const NewYearCharades = () => {
                                                                 .filter(p => !team.players.some(tp => tp.id === p.id))
                                                                 .slice(0, 4)
                                                                 .map(player => (
-                                                                <button
-                                                                    key={player.id}
-                                                                    onClick={() => addPlayerToTeam(team.id, player.id)}
-                                                                    className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-sm transition-all"
-                                                                    title={`Ավելացնել ${player.name}`}
-                                                                >
-                                                                    <span>{player.avatar}</span>
-                                                                    <span className="truncate max-w-[60px]">{player.name}</span>
-                                                                    <Plus className="w-3 h-3" />
-                                                                </button>
-                                                            ))}
+                                                                    <button
+                                                                        key={player.id}
+                                                                        onClick={() => addPlayerToTeam(team.id, player.id)}
+                                                                        className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded text-sm transition-all"
+                                                                        title={`Ավելացնել ${player.name}`}
+                                                                    >
+                                                                        <span>{player.avatar}</span>
+                                                                        <span className="truncate max-w-[60px]">{player.name}</span>
+                                                                        <Plus className="w-3 h-3" />
+                                                                    </button>
+                                                                ))}
                                                             {filteredAvailablePlayers.filter(p => !team.players.some(tp => tp.id === p.id)).length > 4 && (
                                                                 <div className="text-white/60 text-xs text-center w-full">
                                                                     ...և {filteredAvailablePlayers.filter(p => !team.players.some(tp => tp.id === p.id)).length - 4} այլ
@@ -1854,12 +1860,12 @@ const NewYearCharades = () => {
     // READY SCREEN
     if (gameState === 'ready') {
         const team = teams[currentTeam];
-        
+
         return (
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 flex items-center justify-center`}>
                 <FireworksEffect />
                 <ParticleEffect type="sparkle" />
-                
+
                 <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 max-w-2xl w-full border-2 border-white/20 shadow-2xl text-center">
                     <div className="text-7xl mb-6 animate-bounce">
                         {team?.emoji || '🎭'}
@@ -1935,7 +1941,7 @@ const NewYearCharades = () => {
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
                 {showConfetti && <ParticleEffect type="confetti" />}
                 <FireworksEffect />
-                
+
                 <div className="max-w-6xl mx-auto py-8">
                     {/* Header with Team Info and AI Assistant */}
                     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/20">
@@ -1974,8 +1980,8 @@ const NewYearCharades = () => {
                                         <div className="text-purple-300 font-semibold">AI Օգնական</div>
                                         <div className="text-purple-400/80 text-sm">
                                             {currentCard?.difficulty > 4 ? 'Բարդ բառ' :
-                                             currentCard?.difficulty > 3 ? 'Միջին բարդություն' :
-                                             'Հեշտ բառ'}
+                                                currentCard?.difficulty > 3 ? 'Միջին բարդություն' :
+                                                    'Հեշտ բառ'}
                                         </div>
                                     </div>
                                 </div>
@@ -1994,7 +2000,7 @@ const NewYearCharades = () => {
                     <div className={`relative bg-white/10 backdrop-blur-xl rounded-3xl p-12 mb-6 border-2 border-white/20 text-center transition-all duration-500 ${animateCard ? 'scale-110 ring-4 ring-yellow-400/50' : 'scale-100'}`}>
                         {/* Glow Effect */}
                         <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 blur-xl -z-10"></div>
-                        
+
                         <div className={`inline-block px-6 py-3 rounded-full bg-gradient-to-r ${currentCard?.categoryInfo?.color || 'from-gray-500 to-gray-700'} mb-6 shadow-lg`}>
                             <div className="flex items-center gap-2 text-white font-semibold">
                                 {currentCard?.categoryInfo?.icon || '🎯'}
@@ -2055,8 +2061,8 @@ const NewYearCharades = () => {
                                         onClick={() => canUse && useSpecialCard(card.type)}
                                         disabled={!canUse}
                                         className={`p-3 rounded-xl transition-all relative group ${canUse
-                                                ? `bg-gradient-to-r ${card.color} hover:scale-110 cursor-pointer active:scale-95`
-                                                : 'bg-white/5 opacity-30 cursor-not-allowed'
+                                            ? `bg-gradient-to-r ${card.color} hover:scale-110 cursor-pointer active:scale-95`
+                                            : 'bg-white/5 opacity-30 cursor-not-allowed'
                                             }`}
                                         title={`${card.name}: ${card.description}`}
                                     >
@@ -2145,7 +2151,7 @@ const NewYearCharades = () => {
                 <FireworksEffect />
                 <SnowEffect />
                 <ParticleEffect type="celebration" />
-                
+
                 <div className="max-w-6xl mx-auto py-8">
                     <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border-2 border-white/20 shadow-2xl">
                         <div className="text-center mb-8">
@@ -2163,7 +2169,6 @@ const NewYearCharades = () => {
                                 <h3 className="text-3xl font-bold text-white mb-2">Հաղթող</h3>
                                 <div className="text-4xl font-black text-yellow-300 mb-4">{winner?.name}</div>
                                 <div className="text-6xl font-black text-white">{winner?.score} միավոր</div>
-                                {soundEnabled && playWin()}
                             </div>
                         </div>
 
@@ -2173,10 +2178,10 @@ const NewYearCharades = () => {
                                 <div
                                     key={team.id}
                                     className={`p-8 rounded-2xl border-2 transform transition-all hover:scale-105 ${idx === 0
-                                            ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-yellow-400 scale-105'
-                                            : idx === 1
-                                                ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-300'
-                                                : 'bg-gradient-to-r from-amber-700/30 to-amber-800/30 border-amber-600'
+                                        ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-yellow-400 scale-105'
+                                        : idx === 1
+                                            ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-300'
+                                            : 'bg-gradient-to-r from-amber-700/30 to-amber-800/30 border-amber-600'
                                         }`}
                                 >
                                     <div className="text-center">
@@ -2264,8 +2269,8 @@ const NewYearCharades = () => {
                                 {achievements.length > 0 ? (
                                     <div className="space-y-3 max-h-64 overflow-y-auto">
                                         {achievements.map((ach, idx) => (
-                                            <div 
-                                                key={idx} 
+                                            <div
+                                                key={idx}
                                                 className="flex items-center gap-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4 rounded-xl border border-purple-500/30 hover:scale-105 transition-all"
                                             >
                                                 <div className="text-3xl">{ach.emoji}</div>
@@ -2294,8 +2299,8 @@ const NewYearCharades = () => {
                                 </h3>
                                 <div className="space-y-2">
                                     {sortedTeams.slice(3).map((team, idx) => (
-                                        <div 
-                                            key={team.id} 
+                                        <div
+                                            key={team.id}
                                             className="flex items-center justify-between bg-white/5 p-4 rounded-xl hover:bg-white/10 transition-all"
                                         >
                                             <div className="flex items-center gap-4">
