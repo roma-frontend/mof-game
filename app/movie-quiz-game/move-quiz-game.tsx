@@ -1791,7 +1791,7 @@ useEffect(() => {
                                 <Button
                                     onClick={startGame}
                                     disabled={teams.length < 2 || questions.length === 0}
-                                    className={`px-20 py-8 text-4xl font-black rounded-3xl transition-all duration-500 ${teams.length >= 2 && questions.length > 0
+                                    className={`px-20 py-8 text-2xl font-black rounded-3xl transition-all duration-500 ${teams.length >= 2 && questions.length > 0
                                         ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-500 hover:via-pink-500 hover:to-blue-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 animate-pulse-slow'
                                         : 'bg-gray-700 cursor-not-allowed opacity-50'}`}
                                 >
