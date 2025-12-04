@@ -92,8 +92,7 @@ const MovieQuizGame = () => {
 
     const [activeTeam, setActiveTeam] = useState(0);
 
-    // Вопросы (улучшенные ссылки)
-const questions: Question[] = [
+    const questions: Question[] = [
     {
         id: 1,
         type: 'audio',
@@ -896,11 +895,13 @@ const questions: Question[] = [
     }
 ];
 
-    const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>(questions);
+    const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
+    const [isAutoPlayBlocked, setIsAutoPlayBlocked] = useState(false);
     const [answerOptions, setAnswerOptions] = useState<string[]>([]);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     const clickSoundRef = useRef<HTMLAudioElement>(null);
     const correctSoundRef = useRef<HTMLAudioElement>(null);
     const incorrectSoundRef = useRef<HTMLAudioElement>(null);
@@ -908,32 +909,73 @@ const questions: Question[] = [
     const winSoundRef = useRef<HTMLAudioElement>(null);
     const loseSoundRef = useRef<HTMLAudioElement>(null);
 
-    // Инициализация вариантов ответов при загрузке вопроса
-    useEffect(() => {
-        if (shuffledQuestions.length > 0 && currentQuestion < shuffledQuestions.length) {
-            generateAnswerOptions();
+    // Инициализация аудио при загрузке вопроса
+useEffect(() => {
+    if (gamePhase === 'playing' && shuffledQuestions.length > 0 && currentQuestion < shuffledQuestions.length) {
+        const currentQuestionObj = shuffledQuestions[currentQuestion];
+        
+        // Если вопрос аудио и автоплеи включен
+        if (currentQuestionObj.type === 'audio' && config.autoPlay) {
+            // Останавливаем предыдущее аудио
+            if (currentAudioRef.current) {
+                currentAudioRef.current.pause();
+                currentAudioRef.current = null;
+            }
+            
+            // Создаем новое аудио
+            setTimeout(() => {
+                const audio = new Audio(currentQuestionObj.media.url);
+                audio.preload = 'auto';
+                audio.volume = soundOn ? 1 : 0;
+                
+                audio.addEventListener('loadeddata', () => {
+                    audio.play().catch(e => {
+                        console.log("Auto-play failed, waiting for user interaction:", e);
+                        setIsAutoPlayBlocked(true);
+                    });
+                });
+                
+                currentAudioRef.current = audio;
+            }, 500);
         }
-    }, [currentQuestion, shuffledQuestions]);
+        
+        generateAnswerOptions();
+    }
+    
+    return () => {
+        if (currentAudioRef.current) {
+            currentAudioRef.current.pause();
+            currentAudioRef.current = null;
+        }
+    };
+}, [currentQuestion, gamePhase, shuffledQuestions, soundOn, config.autoPlay]);
 
     const generateAnswerOptions = () => {
         const currentQuestionObj = shuffledQuestions[currentQuestion];
         if (!currentQuestionObj) return;
 
-        // Получаем все ответы, кроме текущего
         const otherAnswers = shuffledQuestions
             .filter(q => q.id !== currentQuestionObj.id)
             .map(q => q.answer);
 
-        // Выбираем 3 случайных неправильных ответа
         const shuffledWrongAnswers = [...otherAnswers]
             .sort(() => Math.random() - 0.5)
             .slice(0, 3);
 
-        // Создаем массив из 4 вариантов (3 неправильных + 1 правильный)
         const options = [...shuffledWrongAnswers, currentQuestionObj.answer];
-
-        // Перемешиваем варианты
         setAnswerOptions(options.sort(() => Math.random() - 0.5));
+    };
+
+    // Функция для ручного запуска аудио
+    const playAudio = () => {
+        const currentQuestionObj = shuffledQuestions[currentQuestion];
+        if (currentQuestionObj.type === 'audio' && currentAudioRef.current) {
+            currentAudioRef.current.currentTime = 0;
+            currentAudioRef.current.volume = soundOn ? 1 : 0;
+            currentAudioRef.current.play().catch(e => {
+                console.log("Manual play failed:", e);
+            });
+        }
     };
 
     // Цветовые опции для команд
@@ -955,6 +997,7 @@ const questions: Question[] = [
     // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
 
     useEffect(() => {
+    if (questions.length > 0) {
         if (config.shuffleQuestions) {
             const shuffled = [...questions].sort(() => Math.random() - 0.5);
             setShuffledQuestions(shuffled);
@@ -962,11 +1005,16 @@ const questions: Question[] = [
             setShuffledQuestions(questions);
         }
         setCurrentQuestion(0);
-    }, [config.shuffleQuestions]);
+    }
+}, [config.shuffleQuestions]);
 
     const startGame = () => {
         if (teams.length < 2) {
             alert('➕ Ավելացրեք առնվազն 2 թիմ խաղը սկսելու համար');
+            return;
+        }
+        if (questions.length === 0) {
+            alert('❌ Խնդրում ենք ավելացնել հարցեր');
             return;
         }
         setGamePhase('intro');
@@ -1014,7 +1062,7 @@ const questions: Question[] = [
                 case 'hint':
                 case 'card':
                 case 'special':
-                    audioElement = winSoundRef.current; // Используем win звук для подсказок
+                    audioElement = winSoundRef.current;
                     break;
             }
 
@@ -1057,7 +1105,6 @@ const questions: Question[] = [
             timerRef.current = setTimeout(() => {
                 setTimeLeft(timeLeft - 1);
 
-                // Воспроизводим звук таймера каждую секунду при последних 10 секундах
                 if (timeLeft <= 10 && config.soundEnabled && soundOn) {
                     playSound('timeup');
                 }
@@ -1124,7 +1171,7 @@ const questions: Question[] = [
     // ========== ИГРОВАЯ ЛОГИКА ==========
 
     const handleAnswer = (answer: string) => {
-        if (showAnswer) return; // Предотвращаем повторный выбор
+        if (showAnswer) return;
 
         setSelectedAnswer(answer);
         playSound('click');
@@ -1132,7 +1179,6 @@ const questions: Question[] = [
         const currentQuestionObj = shuffledQuestions[currentQuestion];
         const isCorrect = answer === currentQuestionObj.answer;
 
-        // Задержка перед показом ответа для драматизма
         setTimeout(() => {
             setShowAnswer(true);
             setIsPlaying(false);
@@ -1222,6 +1268,20 @@ const questions: Question[] = [
                         />
                     </div>
                 );
+            case 'audio':
+                return (
+                    <div className="relative w-full aspect-video rounded-3xl overflow-hidden border-4 border-white/30 shadow-2xl shadow-white/10 bg-gradient-to-br from-purple-900/50 to-blue-900/50 flex flex-col items-center justify-center space-y-6">
+                        <Music className="w-32 h-32 text-white/30" />
+                        <div className="text-white/70 text-xl">🎵 Աուդիո հարց</div>
+                        <Button
+                            onClick={playAudio}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 px-8 py-6 text-lg"
+                        >
+                            <Play className="w-6 h-6 mr-2" />
+                            Նվագարկել կրկին
+                        </Button>
+                    </div>
+                );
             default:
                 return (
                     <div className="relative w-full aspect-video rounded-3xl overflow-hidden border-4 border-white/30 shadow-2xl shadow-white/10 bg-gradient-to-br from-purple-900/50 to-blue-900/50 flex items-center justify-center">
@@ -1239,7 +1299,6 @@ const questions: Question[] = [
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20" />
 
-                {/* Animated Stars */}
                 {Array.from({ length: 50 }).map((_, i) => (
                     <div
                         key={i}
@@ -1255,7 +1314,6 @@ const questions: Question[] = [
                     </div>
                 ))}
 
-                {/* Floating Elements */}
                 {Array.from({ length: 15 }).map((_, i) => (
                     <div
                         key={i}
@@ -1732,23 +1790,25 @@ const questions: Question[] = [
                             <div className="text-center mt-12">
                                 <Button
                                     onClick={startGame}
-                                    disabled={teams.length < 2}
-                                    className={`px-20 py-8 text-4xl font-black rounded-3xl transition-all duration-500 ${teams.length >= 2
+                                    disabled={teams.length < 2 || questions.length === 0}
+                                    className={`px-20 py-8 text-4xl font-black rounded-3xl transition-all duration-500 ${teams.length >= 2 && questions.length > 0
                                         ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-500 hover:via-pink-500 hover:to-blue-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 animate-pulse-slow'
                                         : 'bg-gray-700 cursor-not-allowed opacity-50'}`}
                                 >
-                                    {teams.length >= 2 ? (
+                                    {teams.length >= 2 && questions.length > 0 ? (
                                         <>
                                             <Rocket className="w-10 h-10 mr-4 animate-bounce" />
                                             🚀 Սկսել խաղը
                                             <Sparkles className="w-10 h-10 ml-4 animate-spin" />
                                         </>
-                                    ) : (
+                                    ) : teams.length < 2 ? (
                                         '➕ Ավելացրեք 2 թիմ'
+                                    ) : (
+                                        '➕ Ավելացրեք հարցեր'
                                     )}
                                 </Button>
 
-                                {teams.length >= 2 && (
+                                {teams.length >= 2 && questions.length > 0 && (
                                     <p className="text-white/70 mt-6 text-lg animate-pulse">
                                         Պատրաստ է խաղալ {teams.length} թիմերով և {config.timerDuration} վայրկյանանոց ժամանակաչափով
                                     </p>
@@ -1944,45 +2004,49 @@ const questions: Question[] = [
                         <div className="space-y-10">
                             {/* Question Header */}
                             <div className="text-center space-y-6">
-                                <div className="inline-flex items-center gap-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-lg px-8 py-4 rounded-full border border-white/20">
-                                    <span className="text-3xl">
-                                        {shuffledQuestions[currentQuestion].type === 'video' && '🎬'}
-                                        {shuffledQuestions[currentQuestion].type === 'audio' && '🎵'}
-                                        {shuffledQuestions[currentQuestion].type === 'quote' && '💬'}
-                                        {shuffledQuestions[currentQuestion].type === 'scene' && '🎭'}
-                                        {shuffledQuestions[currentQuestion].type === 'emoji' && '😊'}
-                                    </span>
-                                    <div className="text-left">
-                                        <div className="text-2xl font-bold text-white">
-                                            {shuffledQuestions[currentQuestion].title}
+                                {shuffledQuestions[currentQuestion] && (
+                                    <>
+                                        <div className="inline-flex items-center gap-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-lg px-8 py-4 rounded-full border border-white/20">
+                                            <span className="text-3xl">
+                                                {shuffledQuestions[currentQuestion].type === 'video' && '🎬'}
+                                                {shuffledQuestions[currentQuestion].type === 'audio' && '🎵'}
+                                                {shuffledQuestions[currentQuestion].type === 'quote' && '💬'}
+                                                {shuffledQuestions[currentQuestion].type === 'scene' && '🎭'}
+                                                {shuffledQuestions[currentQuestion].type === 'emoji' && '😊'}
+                                            </span>
+                                            <div className="text-left">
+                                                <div className="text-2xl font-bold text-white">
+                                                    {shuffledQuestions[currentQuestion].title}
+                                                </div>
+                                                <div className="text-white/70">
+                                                    {shuffledQuestions[currentQuestion].difficulty === 'easy' && '⭐ Հեշտ'}
+                                                    {shuffledQuestions[currentQuestion].difficulty === 'medium' && '⭐⭐ Միջին'}
+                                                    {shuffledQuestions[currentQuestion].difficulty === 'hard' && '⭐⭐⭐ Բարդ'}
+                                                    {shuffledQuestions[currentQuestion].difficulty === 'expert' && '⭐⭐⭐⭐ Էքսպերտ'}
+                                                </div>
+                                            </div>
+                                            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 rounded-full">
+                                                <span className="font-black text-white">{shuffledQuestions[currentQuestion].points} միավոր</span>
+                                            </div>
                                         </div>
-                                        <div className="text-white/70">
-                                            {shuffledQuestions[currentQuestion].difficulty === 'easy' && '⭐ Հեշտ'}
-                                            {shuffledQuestions[currentQuestion].difficulty === 'medium' && '⭐⭐ Միջին'}
-                                            {shuffledQuestions[currentQuestion].difficulty === 'hard' && '⭐⭐⭐ Բարդ'}
-                                            {shuffledQuestions[currentQuestion].difficulty === 'expert' && '⭐⭐⭐⭐ Էքսպերտ'}
-                                        </div>
-                                    </div>
-                                    <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 rounded-full">
-                                        <span className="font-black text-white">{shuffledQuestions[currentQuestion].points} միավոր</span>
-                                    </div>
-                                </div>
 
-                                <div className="max-w-3xl mx-auto">
-                                    <p className="text-2xl text-white/90">
-                                        {shuffledQuestions[currentQuestion].hint}
-                                    </p>
-                                    {hintUsed && (
-                                        <p className="text-xl text-blue-300 mt-4 animate-pulse bg-blue-500/20 px-6 py-3 rounded-xl">
-                                            💡 Հուշում: {shuffledQuestions[currentQuestion].answer.split('(')[0]}
-                                        </p>
-                                    )}
-                                </div>
+                                        <div className="max-w-3xl mx-auto">
+                                            <p className="text-2xl text-white/90">
+                                                {shuffledQuestions[currentQuestion].hint}
+                                            </p>
+                                            {hintUsed && (
+                                                <p className="text-xl text-blue-300 mt-4 animate-pulse bg-blue-500/20 px-6 py-3 rounded-xl">
+                                                    💡 Հուշում: {shuffledQuestions[currentQuestion].answer.split('(')[0]}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Media Display */}
                             <div className="max-w-5xl mx-auto">
-                                {getMediaComponent(shuffledQuestions[currentQuestion])}
+                                {shuffledQuestions[currentQuestion] && getMediaComponent(shuffledQuestions[currentQuestion])}
                             </div>
 
                             {/* Answers */}
@@ -1992,7 +2056,7 @@ const questions: Question[] = [
                                         key={idx}
                                         onClick={() => handleAnswer(answer)}
                                         disabled={showAnswer}
-                                        className={`group relative p-8 text-xl font-bold h-auto min-h-[100px] rounded-2xl transition-all duration-300 overflow-hidden ${showAnswer
+                                        className={`group relative p-8 text-xl font-bold h-auto min-h-[100px] rounded-2xl transition-all duration-300 overflow-hidden ${showAnswer && shuffledQuestions[currentQuestion]
                                             ? answer === shuffledQuestions[currentQuestion].answer
                                                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-4 border-green-400 text-white scale-105 shadow-2xl shadow-green-500/50'
                                                 : selectedAnswer === answer
@@ -2010,7 +2074,7 @@ const questions: Question[] = [
                             </div>
 
                             {/* Answer Reveal */}
-                            {showAnswer && (
+                            {showAnswer && shuffledQuestions[currentQuestion] && (
                                 <div className="max-w-5xl mx-auto space-y-8 text-center animate-in fade-in duration-500">
                                     <div className="relative bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-blue-500/30 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
                                         <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-x-16 -translate-y-16" />
@@ -2286,3 +2350,7 @@ const questions: Question[] = [
 };
 
 export default MovieQuizGame;
+
+function setIsAutoPlayBlocked(arg0: boolean) {
+    throw new Error('Function not implemented.');
+}
