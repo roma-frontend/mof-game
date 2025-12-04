@@ -144,6 +144,8 @@ const playerAvatars = ['👤', '👨', '👩', '🧑', '🧔', '👨‍💼', '�
 const NewYearCharades = () => {
     const router = useRouter()
     const [gameState, setGameState] = useState<GameState>('menu');
+    const [explainer, setExplainer] = useState<Player | null>(null);
+    const [guesser, setGuesser] = useState<Player | null>(null);
     const [teams, setTeams] = useState<Team[]>([]);
     const [currentTeam, setCurrentTeam] = useState(0);
     const [currentCard, setCurrentCard] = useState<Card | null>(null);
@@ -734,10 +736,35 @@ const NewYearCharades = () => {
     };
 
     const startGame = () => {
+        // Случайно выбираем объясняющего и угадывающего
+        const selectRandomPlayers = () => {
+            const currentTeamData = teams[currentTeam];
+            if (!currentTeamData || currentTeamData.players.length < 2) return;
+
+            const players = [...currentTeamData.players];
+
+            // Случайно выбираем объясняющего
+            const explainerIndex = Math.floor(Math.random() * players.length);
+            const selectedExplainer = players[explainerIndex];
+
+            // Удаляем объясняющего из массива
+            players.splice(explainerIndex, 1);
+
+            // Случайно выбираем угазывающего из оставшихся
+            const selectedGuesser = players.length > 0
+                ? players[Math.floor(Math.random() * players.length)]
+                : selectedExplainer; // если в команде всего 1 игрок
+
+            setExplainer(selectedExplainer);
+            setGuesser(selectedGuesser);
+        };
+
+        selectRandomPlayers();
         drawCard();
         setGameState('playing');
         setStartTime(Date.now());
         setAnimateCard(true);
+        setShowWord(false); // Слово изначально СКРЫТО
         setTimeout(() => setAnimateCard(false), 500);
         if (soundEnabled) {
             playCardFlip();
@@ -1192,34 +1219,34 @@ const NewYearCharades = () => {
 
     // MAIN MENU
     if (gameState === 'menu') {
-    return (
-        <>
-            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4 transition-all duration-1000`}>
-                
-                {/* Ավելացրեք այս կոդը այստեղ՝ վերևի ձախ անկյունում */}
-                <div className="fixed left-[2rem] top-[2rem] z-50">
-                    <button
-                        onClick={() => router.push("/")}
-                        className="group relative flex px-8 py-4 text-xl font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl h-[3rem] bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white"
-                    >
-                        <span className="relative z-10 flex items-center gap-3">
-                            <svg
-                                className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform duration-300"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Գլխավոր էջ
-                            <Sparkles className="w-5 h-5 animate-pulse" />
-                        </span>
-                    </button>
-                </div>
+        return (
+            <>
+                <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4 transition-all duration-1000`}>
 
-                <FireworksEffect />
-                <SnowEffect />
-                <ParticleEffect type="sparkle" />
+                    {/* Ավելացրեք այս կոդը այստեղ՝ վերևի ձախ անկյունում */}
+                    <div className="fixed left-[2rem] top-[2rem] z-50">
+                        <button
+                            onClick={() => router.push("/")}
+                            className="group relative flex px-8 py-4 text-xl font-bold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl h-[3rem] bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white"
+                        >
+                            <span className="relative z-10 flex items-center gap-3">
+                                <svg
+                                    className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform duration-300"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Գլխավոր էջ
+                                <Sparkles className="w-5 h-5 animate-pulse" />
+                            </span>
+                        </button>
+                    </div>
+
+                    <FireworksEffect />
+                    <SnowEffect />
+                    <ParticleEffect type="sparkle" />
 
                     <div className="absolute top-4 right-4 flex gap-2 z-50">
                         <button
@@ -1912,14 +1939,29 @@ const NewYearCharades = () => {
         );
     }
 
-    // READY SCREEN
     if (gameState === 'ready') {
         const team = teams[currentTeam];
 
+        // Случайно выбираем игроков для отображения в READY SCREEN
+        const selectPlayersForDisplay = () => {
+            if (!team || team.players.length < 2) return;
+
+            const players = [...team.players];
+            const explainerIndex = Math.floor(Math.random() * players.length);
+            const explainer = players[explainerIndex];
+
+            players.splice(explainerIndex, 1);
+            const guesser = players.length > 0
+                ? players[Math.floor(Math.random() * players.length)]
+                : explainer;
+
+            return { explainer, guesser };
+        };
+
+        const selectedPlayers = selectPlayersForDisplay();
+
         return (
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 flex items-center justify-center`}>
-
-                
                 <FireworksEffect />
                 <ParticleEffect type="sparkle" />
 
@@ -1941,12 +1983,6 @@ const NewYearCharades = () => {
                             <div className="text-2xl">👥</div>
                             <div>
                                 <div className="text-white font-bold text-xl">{team?.players.length || 0} խաղացող</div>
-                                {team?.captain && (
-                                    <div className="text-white/80 text-sm flex items-center justify-center gap-1">
-                                        <Crown className="w-3 h-3 text-yellow-400" />
-                                        Կապիտան՝ {team.captain.name}
-                                    </div>
-                                )}
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2 justify-center">
@@ -1956,6 +1992,44 @@ const NewYearCharades = () => {
                                     <span className="text-white text-sm">{player.name}</span>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Показываем, кто будет объяснять и угадывать */}
+                    <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-2xl border border-blue-500/30">
+                        <h3 className="text-2xl font-bold text-white mb-4">Հերթը ձերն է!</h3>
+
+                        <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                                <div className="text-4xl mb-2">🎭</div>
+                                <div className="text-white/60 text-sm mb-1">Բացատրող</div>
+                                <div className="text-white font-bold text-xl">
+                                    {selectedPlayers?.explainer?.name || '...'}
+                                </div>
+                                <div className="text-white/60 text-xs mt-1">
+                                    Կտեսնի բառը
+                                </div>
+                            </div>
+
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                                <div className="text-4xl mb-2">🎯</div>
+                                <div className="text-white/60 text-sm mb-1">Կռահող</div>
+                                <div className="text-white font-bold text-xl">
+                                    {selectedPlayers?.guesser?.name || '...'}
+                                </div>
+                                <div className="text-white/60 text-xs mt-1">
+                                    Կփակի աչքերը
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl">
+                            <div className="text-white/80 text-sm">
+                                <span className="text-yellow-300 font-bold">{selectedPlayers?.guesser?.name}</span> - փակի՛ր աչքերդ
+                            </div>
+                            <div className="text-white/80 text-sm mt-1">
+                                <span className="text-green-300 font-bold">{selectedPlayers?.explainer?.name}</span> - պատրաստվի՛ր բացատրել
+                            </div>
                         </div>
                     </div>
 
@@ -1985,43 +2059,101 @@ const NewYearCharades = () => {
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
                     >
                         <Play className="w-10 h-10" />
-                        Սկսել Ցուցադրումը
+                        Սկսել Խաղը
                     </button>
                 </div>
             </div>
         );
     }
 
-    // PLAYING SCREEN
+    // Модифицируйте PLAYING SCREEN
     if (gameState === 'playing' && currentCard) {
+        const currentTeamData = teams[currentTeam];
+
         return (
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
                 {showConfetti && <ParticleEffect type="confetti" />}
                 <FireworksEffect />
 
                 <div className="max-w-6xl mx-auto py-8">
-                    {/* Header with Team Info and AI Assistant */}
-                    <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/20">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <div className="text-white/60 text-sm mb-1">Թիմ</div>
-                                <div className="text-white font-bold text-xl">{teams[currentTeam]?.name}</div>
-                                <div className="text-white/40 text-xs mt-1">Արդյունավետություն {teams[currentTeam]?.efficiency.toFixed(0)}%</div>
-                            </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <div className="text-white/60 text-sm mb-1">Ժամանակ</div>
-                                <div className={`text-4xl font-black ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
-                                    {timeLeft}
+                    {/* Header with Team Info and Controls */}
+                    <div className="mb-6">
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                <div className="text-center p-4 bg-white/5 rounded-lg">
+                                    <div className="text-white/60 text-sm mb-1">Թիմ</div>
+                                    <div className="text-white font-bold text-xl">{currentTeamData?.name}</div>
+                                    <div className="text-white/40 text-xs mt-1">Արդյունավետություն {currentTeamData?.efficiency.toFixed(0)}%</div>
+                                </div>
+
+                                <div className="text-center p-4 bg-white/5 rounded-lg">
+                                    <div className="text-white/60 text-sm mb-1">Ժամանակ</div>
+                                    <div className={`text-4xl font-black ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                                        {timeLeft}
+                                    </div>
+                                </div>
+
+                                <div className="text-center p-4 bg-white/5 rounded-lg">
+                                    <div className="text-white/60 text-sm mb-1">Միավոր</div>
+                                    <div className="text-white font-bold text-3xl">{currentTeamData?.score}</div>
+                                </div>
+
+                                <div className="text-center p-4 bg-white/5 rounded-lg">
+                                    <div className="text-white/60 text-sm mb-1">Բացատրող</div>
+                                    <div className="text-white font-bold text-lg flex items-center justify-center gap-2">
+                                        {explainer?.avatar}
+                                        {explainer?.name}
+                                    </div>
+                                </div>
+
+                                <div className="text-center p-4 bg-white/5 rounded-lg">
+                                    <div className="text-white/60 text-sm mb-1">Կռահող</div>
+                                    <div className="text-white font-bold text-lg flex items-center justify-center gap-2">
+                                        {guesser?.avatar}
+                                        {guesser?.name}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <div className="text-white/60 text-sm mb-1">Միավոր</div>
-                                <div className="text-white font-bold text-3xl">{teams[currentTeam]?.score}</div>
-                            </div>
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                                <div className="text-white/60 text-sm mb-1">Ռեկորդ</div>
-                                <div className="text-white font-bold text-xl">
-                                    {streak > 0 ? `🔥 ${streak}` : '—'}
+
+                            {/* Current Status */}
+                            <div className="mt-4 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/30">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div className="text-center">
+                                        <div className="text-white/60 text-sm mb-1">Ընթացիկ վիճակ</div>
+                                        <div className="text-white font-bold text-lg">
+                                            {showWord ? (
+                                                <span className="text-green-300">Բառը տեսանելի է</span>
+                                            ) : (
+                                                <span className="text-red-300">Բառը թաքցված է</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-white/60 text-sm mb-1">Հրահանգներ</div>
+                                        <div className="text-white">
+                                            <span className="text-green-300 font-bold">{guesser?.name}</span> - փակի՛ր աչքերդ
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setShowWord(!showWord)}
+                                        className={`px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 ${showWord
+                                            ? 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700'
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'}`}
+                                    >
+                                        {showWord ? (
+                                            <div className="flex items-center gap-2">
+                                                <EyeOff className="w-5 h-5" />
+                                                Թաքցնել բառը
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <Eye className="w-5 h-5" />
+                                                Ցույց տալ {explainer?.name}-ին
+                                            </div>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2044,7 +2176,7 @@ const NewYearCharades = () => {
                                 </div>
                                 <button
                                     onClick={() => useSpecialCard('joker')}
-                                    disabled={!teams[currentTeam]?.specialCards.joker || teams[currentTeam].specialCards.joker <= 0}
+                                    disabled={!currentTeamData?.specialCards.joker || currentTeamData.specialCards.joker <= 0}
                                     className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-all hover:scale-105"
                                 >
                                     Հուշում ստանալ
@@ -2070,8 +2202,11 @@ const NewYearCharades = () => {
                                 <div className="text-7xl font-black text-white mb-4 animate-pulse-slow">
                                     {currentCard?.word || 'Բառ'}
                                 </div>
-                                <div className="text-2xl text-white/60">
-                                    Ցույց տուր այս բառը!
+                                <div className="text-2xl text-white/60 mb-4">
+                                    <span className="text-green-300 font-bold">{explainer?.name}</span> - բացատրի՛ր այս բառը
+                                </div>
+                                <div className="text-xl text-yellow-300 font-bold mb-4">
+                                    {guesser?.name} - փակի՛ր աչքերդ
                                 </div>
                                 {currentCard?.difficulty && (
                                     <div className="mt-4 text-sm text-white/40">
@@ -2080,22 +2215,43 @@ const NewYearCharades = () => {
                                 )}
                             </div>
                         ) : (
-                            <div className="text-7xl font-black text-white/20 animate-pulse">
-                                • • • • •
-                            </div>
-                        )}
-
-                        {/* Mood Indicator */}
-                        {mood !== 'neutral' && (
-                            <div className="absolute top-4 right-4">
-                                <div className={`p-2 rounded-full ${mood === 'happy' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                                    {mood === 'happy' ? '😊' : '😔'}
+                            <div className="animate-fadeIn">
+                                <div className="text-7xl font-black text-white/20 mb-4 animate-pulse">
+                                    • • • • •
+                                </div>
+                                <div className="text-2xl text-white/60 mb-6">
+                                    <span className="text-green-300 font-bold">{explainer?.name}</span> - սպասի՛ր
+                                </div>
+                                <div className="text-xl text-yellow-300 font-bold mb-4 animate-pulse">
+                                    {guesser?.name} - փակի՛ր աչքերդ
+                                </div>
+                                <div className="mt-6 p-4 bg-gradient-to-r from-red-900/30 to-pink-900/30 rounded-xl inline-block">
+                                    <div className="text-white/80 text-lg">
+                                        Բառը թաքցված է <span className="text-yellow-300">{guesser?.name}</span>-ից
+                                    </div>
                                 </div>
                             </div>
                         )}
+
+                        {/* Status Indicator */}
+                        <div className="absolute top-4 right-4">
+                            <div className={`p-3 rounded-full ${showWord ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                                {showWord ? (
+                                    <div className="flex items-center gap-2">
+                                        <Eye className="w-5 h-5 text-green-400" />
+                                        <span className="text-white text-sm">Բառը տեսանելի է</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <EyeOff className="w-5 h-5 text-red-400" />
+                                        <span className="text-white text-sm">Բառը թաքցված է</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Special Cards with AI Suggestions */}
+                    {/* Special Cards */}
                     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/20">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-white font-bold flex items-center gap-2">
@@ -2104,13 +2260,13 @@ const NewYearCharades = () => {
                             </h3>
                             {aiAssistant && (
                                 <div className="text-sm text-blue-300">
-                                    {specialCardTypes.filter(card => teams[currentTeam]?.specialCards[card.type] > 0).length} մատչելի
+                                    {specialCardTypes.filter(card => currentTeamData?.specialCards[card.type] > 0).length} մատչելի
                                 </div>
                             )}
                         </div>
                         <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2">
                             {specialCardTypes.map(card => {
-                                const count = teams[currentTeam]?.specialCards[card.type] || 0;
+                                const count = currentTeamData?.specialCards[card.type] || 0;
                                 const canUse = count > 0;
                                 return (
                                     <button
@@ -2150,7 +2306,7 @@ const NewYearCharades = () => {
                                 <Check className="w-8 h-8" />
                                 <div className="absolute inset-0 animate-ping opacity-20">✓</div>
                             </div>
-                            Ճիշտ է!
+                            {guesser?.name} կռահեց!
                         </button>
                         <button
                             onClick={() => {
@@ -2163,36 +2319,30 @@ const NewYearCharades = () => {
                         </button>
                     </div>
 
-                    {/* Last Action Feedback */}
-                    {lastAction && (
-                        <div className="text-center animate-fadeIn">
-                            <div className="inline-block bg-gradient-to-r from-blue-500/20 to-purple-500/20 px-6 py-3 rounded-full border border-blue-500/30">
-                                <span className="text-white/80 text-sm">
-                                    {lastAction}
-                                </span>
+                    {/* Quick Controls */}
+                    <div className="fixed bottom-4 left-4 flex gap-2">
+                        <button
+                            onClick={() => setShowWord(true)}
+                            className="p-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg border border-green-500/30 transition-all"
+                            title="Ցույց տալ բառը բացատրողին"
+                        >
+                            <Eye className="w-5 h-5 text-green-400" />
+                        </button>
+                        <button
+                            onClick={() => setShowWord(false)}
+                            className="p-3 bg-red-500/20 hover:bg-red-500/30 rounded-lg border border-red-500/30 transition-all"
+                            title="Թաքցնել բառը կռահողից"
+                        >
+                            <EyeOff className="w-5 h-5 text-red-400" />
+                        </button>
+                        <div className="p-3 bg-white/10 rounded-lg border border-white/20">
+                            <div className="text-white text-xs">
+                                <div className="font-bold">Խաղացողներ</div>
+                                <div className="text-green-300">{explainer?.name} → 👁️</div>
+                                <div className="text-yellow-300">{guesser?.name} → 🙈</div>
                             </div>
                         </div>
-                    )}
-
-                    {/* Combo and Streak Indicators */}
-                    {(streak > 0 || combo > 0) && (
-                        <div className="mt-6 text-center space-y-2">
-                            {streak > 0 && (
-                                <div className="inline-block bg-gradient-to-r from-orange-500 to-red-600 px-6 py-3 rounded-full animate-pulse">
-                                    <span className="text-white font-bold text-xl">
-                                        🔥 {streak} անընդմեջ ճիշտ
-                                    </span>
-                                </div>
-                            )}
-                            {combo > 0 && (
-                                <div className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-3 rounded-full ml-2">
-                                    <span className="text-white font-bold text-lg">
-                                        ⚡ Combo x{combo}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
         );
