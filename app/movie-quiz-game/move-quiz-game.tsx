@@ -1901,7 +1901,7 @@ useEffect(() => {
 
                             <Button
                                 onClick={beginPlaying}
-                                className="px-24 py-10 text-5xl font-black rounded-3xl bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 hover:from-green-500 hover:via-emerald-500 hover:to-green-500 hover:scale-110 transition-all duration-500 animate-bounce-slow shadow-2xl shadow-green-500/30"
+                                className="px-24 py-10 text-2xl font-black rounded-3xl bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 hover:from-green-500 hover:via-emerald-500 hover:to-green-500 hover:scale-110 transition-all duration-500 animate-bounce-slow shadow-2xl shadow-green-500/30"
                             >
                                 <Lightning className="w-12 h-12 mr-6 animate-pulse" />
                                 🚀 Սկսել
