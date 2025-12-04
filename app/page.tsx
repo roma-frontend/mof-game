@@ -48,7 +48,7 @@ const NewYearLanding = () => {
                 animationDuration: `${particle.duration}s`,
               }}
             >
-              <Icon 
+              <Icon
                 className="text-white/20"
                 style={{
                   width: `${particle.size}px`,
@@ -67,7 +67,7 @@ const NewYearLanding = () => {
 
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        
+
         {/* Top decorative elements */}
         <div className="flex gap-8 mb-8 animate-bounce">
           <Sparkles className="w-16 h-16 text-yellow-300" />
@@ -78,9 +78,9 @@ const NewYearLanding = () => {
         {/* Main title */}
         <div className="text-center mb-12 space-y-6">
           <h1 className="text-[90px] md:text-[110px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-red-300 to-pink-300 drop-shadow-2xl animate-pulse">
-            Ամանորյա խաղեր 
+            Ամանորյա խաղեր
           </h1>
-          
+
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
               <div className="flex items-center gap-2 text-white">
@@ -106,74 +106,88 @@ const NewYearLanding = () => {
         {/* Description */}
         <div className="max-w-2xl mx-auto mb-12">
           <p className="text-2xl md:text-3xl text-center text-white/90 leading-relaxed backdrop-blur-sm bg-white/5 p-8 rounded-3xl border border-white/10">
-            Զվարճալի և ինտերակտիվ խաղեր աշխատավայրի 
+            Զվարճալի և ինտերակտիվ խաղեր աշխատավայրի
             <span className="text-yellow-300 font-bold"> Ամանորյա </span>
-            և 
+            և
             <span className="text-red-300 font-bold"> Սուրբ Ծննդյան </span>
             տոների համար
           </p>
         </div>
 
         {/* CTA Buttons */}
-<div className="space-y-6 text-center">
-  <div className="flex flex-wrap gap-6 justify-center">
-    <Button
-      onClick={() => router.push("/guess-the-melody")}
-      className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <span className="relative z-10 flex items-center gap-4">
-        <Sparkles className="w-10 h-10 animate-bounce" />
-        Գուշակիր Մեղեդին
-        <Star className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
-      </span>
-    </Button>
+        <div className="space-y-6 text-center">
+          <div className="flex flex-wrap gap-6 justify-center">
+            <Button
+              onClick={() => router.push("/guess-the-melody")}
+              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center gap-4">
+                <Sparkles className="w-10 h-10 animate-bounce" />
+                Գուշակիր Մեղեդին
+                <Star className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </Button>
 
-    <Button
-      onClick={() => router.push("/new-year")}
-      className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <span className="relative z-10 flex items-center gap-4">
-        <Gift className="w-10 h-10 animate-bounce" />
-        Ամանորյա խաղեր
-        <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
-      </span>
-    </Button>
+            <Button
+              onClick={() => router.push("/new-year")}
+              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center gap-4">
+                <Gift className="w-10 h-10 animate-bounce" />
+                Ամանորյա խաղեր
+                <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </Button>
 
-    <Button
-      onClick={() => router.push("/new-year-charades")}
-      className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <span className="relative z-10 flex items-center gap-4">
-        <Gift className="w-10 h-10 animate-bounce" />
-        Ամանորյա կոկորդիլոս
-        <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
-      </span>
-    </Button>
 
-    <Button
-      onClick={() => router.push("/truth-or-dare")}
-      className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <span className="relative z-10 flex items-center gap-4">
-        <Gift className="w-10 h-10 animate-bounce" />
-        Правда или Действие
-        <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
-      </span>
-    </Button>
-  </div>
+            <Button
+              onClick={() => router.push("/movie-quiz-game")}
+              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center gap-4">
+                <Gift className="w-10 h-10 animate-bounce" />
+                Կինո-Կինո
+                <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </Button>
 
-  <p className="text-center text-white/60 text-lg">
-    Տպեք քարտերը և վայելեք խաղերը ձեր թիմի հետ! 🎄
-  </p>
-</div>
+            <Button
+              onClick={() => router.push("/new-year-charades")}
+              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center gap-4">
+                <Gift className="w-10 h-10 animate-bounce" />
+                Ամանորյա կոկորդիլոս
+                <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </Button>
+
+            <Button
+              onClick={() => router.push("/truth-or-dare")}
+              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10 flex items-center gap-4">
+                <Gift className="w-10 h-10 animate-bounce" />
+                Правда или Действие
+                <PartyPopper className="w-10 h-10 animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </Button>
+          </div>
+
+          <p className="text-center text-white/60 text-lg">
+            Տպեք քարտերը և վայելեք խաղերը ձեր թիմի հետ! 🎄
+          </p>
+        </div>
 
         {/* Features grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-5xl mx-auto w-full">
