@@ -359,3 +359,30 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(14, 165, 233, 0.7);
 }
+
+/* Добавьте в файл globals.css или в инлайн стили на странице */
+select option {
+  background-color: #1a202c !important;
+  color: white !important;
+  padding: 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+select:focus option {
+  background-color: #2d3748 !important;
+}
+
+/* Стилизация самого select */
+select {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+
+select option:checked,
+select option:hover {
+  background-color: #4299e1 !important;
+  color: white !important;
+}
