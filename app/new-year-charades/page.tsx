@@ -167,6 +167,8 @@ const NewYearCharades = () => {
     const [specialCards, setSpecialCards] = useState<Record<string, boolean>>({});
     const [round, setRound] = useState(1);
     const [maxRounds, setMaxRounds] = useState(5);
+    const [teamQueue, setTeamQueue] = useState<number[]>([]);
+    const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
     const [stats, setStats] = useState<Stats>({
         fastestGuess: null,
         bestPlayer: null,
@@ -204,7 +206,7 @@ const NewYearCharades = () => {
     const [mood, setMood] = useState<Mood>('neutral');
     const [particles, setParticles] = useState<Particle[]>([]);
     const [ambientSounds, setAmbientSounds] = useState(true);
-    
+
     // НОВОЕ: Для режима Blitz
     const [gameStartTime, setGameStartTime] = useState<number | null>(null);
     const [totalGameTime, setTotalGameTime] = useState(180); // 3 минуты по умолчанию
@@ -240,25 +242,25 @@ const NewYearCharades = () => {
     // Основные эффекты - ВСЕ useEffects ДОЛЖНЫ БЫТЬ НА ВЕРХНЕМ УРОВНЕ
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        
+
         if (gameState === 'playing' && isGameActive && timeLeft > 0) {
             interval = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 10 && soundEnabled) {
                         playTimer();
                     }
-                    
+
                     // Если время вышло, завершаем игру
                     if (prev <= 1) {
                         endGame();
                         return 0;
                     }
-                    
+
                     return prev - 1;
                 });
             }, 1000);
         }
-        
+
         return () => clearInterval(interval);
     }, [gameState, timeLeft, soundEnabled, isGameActive]);
 
@@ -758,55 +760,67 @@ const NewYearCharades = () => {
 
     // НОВАЯ ЛОГИКА ДЛЯ РЕЖИМА BLITZ - СТАРТ ИГРЫ
     const startBlitzGame = () => {
-        // Случайно выбираем объясняющего и угадывающего
-        const selectRandomPlayers = () => {
-            const currentTeamData = teams[currentTeam];
-            if (!currentTeamData || currentTeamData.players.length < 2) return;
+    // Создаем очередь из всех команд
+    const queue = teams.map((_, index) => index);
+    setTeamQueue(queue);
+    setCurrentQueueIndex(0);
+    
+    // Начинаем игру для первой команды
+    startTeamTurn(queue[0]);
+};
 
-            const players = [...currentTeamData.players];
+const startTeamTurn = (teamIndex: number) => {
+    setCurrentTeam(teamIndex);
+    
+    // Случайно выбираем объясняющего и угадывающего для этой команды
+    const selectRandomPlayers = () => {
+        const currentTeamData = teams[teamIndex];
+        if (!currentTeamData || currentTeamData.players.length < 2) return;
 
-            // Случайно выбираем объясняющего
-            const explainerIndex = Math.floor(Math.random() * players.length);
-            const selectedExplainer = players[explainerIndex];
+        const players = [...currentTeamData.players];
 
-            // Удаляем объясняющего из массива
-            players.splice(explainerIndex, 1);
+        // Случайно выбираем объясняющего
+        const explainerIndex = Math.floor(Math.random() * players.length);
+        const selectedExplainer = players[explainerIndex];
 
-            // Случайно выбираем угазывающего из оставшихся
-            const selectedGuesser = players.length > 0
-                ? players[Math.floor(Math.random() * players.length)]
-                : selectedExplainer; // если в команде всего 1 игрок
+        // Удаляем объясняющего из массива
+        players.splice(explainerIndex, 1);
 
-            setExplainer(selectedExplainer);
-            setGuesser(selectedGuesser);
-        };
+        // Случайно выбираем угазывающего из оставшихся
+        const selectedGuesser = players.length > 0
+            ? players[Math.floor(Math.random() * players.length)]
+            : selectedExplainer; // если в команде всего 1 игрок
 
-        selectRandomPlayers();
-        
-        setIsGameActive(true);
-        setGameStartTime(Date.now());
-        setWordsGuessed(0);
-        setCurrentStreak(0);
-        setMaxCombo(0);
-        
-        // Устанавливаем общее время игры в зависимости от выбранной сложности
-        const gameTime = difficultySettings[difficulty].time;
-        setTotalGameTime(gameTime);
-        setTimeLeft(gameTime);
-        
-        drawCard();
-        setGameState('playing');
-        setAnimateCard(true);
-        setShowWord(false);
-        
-        setTimeout(() => setAnimateCard(false), 500);
-        
-        if (soundEnabled) {
-            playCardFlip();
-            playSpecial();
-        }
-        generateParticles('sparkle', 20);
+        setExplainer(selectedExplainer);
+        setGuesser(selectedGuesser);
     };
+
+    selectRandomPlayers();
+    
+    setIsGameActive(true);
+    setGameStartTime(Date.now());
+    setWordsGuessed(0);
+    setCurrentStreak(0);
+    setMaxCombo(0);
+    
+    // Устанавливаем общее время игры в зависимости от выбранной сложности
+    const gameTime = difficultySettings[difficulty].time;
+    setTotalGameTime(gameTime);
+    setTimeLeft(gameTime);
+    
+    drawCard();
+    setGameState('playing');
+    setAnimateCard(true);
+    setShowWord(false);
+    
+    setTimeout(() => setAnimateCard(false), 500);
+    
+    if (soundEnabled) {
+        playCardFlip();
+        playSpecial();
+    }
+    generateParticles('sparkle', 20);
+};
 
     // Модифицированная функция для рисования карточки
     const drawCard = () => {
@@ -841,7 +855,7 @@ const NewYearCharades = () => {
         };
 
         setCurrentCard(newCard);
-        
+
         if (soundEnabled) playCardFlip();
     };
 
@@ -851,7 +865,7 @@ const NewYearCharades = () => {
 
         const endTime = Date.now();
         const timeTaken = currentCard.startTime ? (endTime - currentCard.startTime) / 1000 : 0;
-        
+
         // Базовые очки зависят от скорости
         let basePoints = difficultySettings[difficulty].points;
         let multiplier = difficultySettings[difficulty].multiplier;
@@ -884,7 +898,7 @@ const NewYearCharades = () => {
         setStats(prev => {
             const totalWords = prev.totalWords + 1;
             const avgTime = ((prev.avgTime * (totalWords - 1)) + timeTaken) / totalWords;
-            
+
             return {
                 ...prev,
                 totalWords,
@@ -898,7 +912,7 @@ const NewYearCharades = () => {
             if (idx === currentTeam) {
                 const totalTime = (team.averageTimePerWord * team.totalWordsGuessed + timeTaken) / (team.totalWordsGuessed + 1);
                 const newWordsGuessed = team.totalWordsGuessed + 1;
-                
+
                 return {
                     ...team,
                     score: team.score + points,
@@ -924,7 +938,7 @@ const NewYearCharades = () => {
         }
 
         checkAchievements(timeTaken, points);
-        
+
         // В режиме Blitz сразу рисуем новую карточку
         setTimeout(() => {
             drawCard();
@@ -935,7 +949,7 @@ const NewYearCharades = () => {
     // Модифицированная функция handleSkip для режима Blitz
     const handleSkip = () => {
         setCurrentStreak(0);
-        
+
         if (soundEnabled) playIncorrect();
 
         setTeams(prev => prev.map((team, idx) => {
@@ -1103,19 +1117,49 @@ const NewYearCharades = () => {
     };
 
     // Модифицированная функция endGame для режима Blitz
-    const endGame = () => {
-        setIsGameActive(false);
-        
-        // Рассчитываем слова в минуту
-        const gameDuration = totalGameTime / 60; // в минутах
-        const wordsPerMinute = gameDuration > 0 ? wordsGuessed / gameDuration : 0;
-        
-        setStats(prev => ({
-            ...prev,
-            totalGameTime: totalGameTime,
-            wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
-        }));
+const endGame = () => {
+    setIsGameActive(false);
+    
+    // Рассчитываем слова в минуту для текущей команды
+    const gameDuration = totalGameTime / 60; // в минутах
+    const wordsPerMinute = gameDuration > 0 ? wordsGuessed / gameDuration : 0;
+    
+    // Обновляем статистику текущей команды
+    setTeams(prev => prev.map((team, idx) => {
+        if (idx === currentTeam) {
+            return {
+                ...team,
+                wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
+            };
+        }
+        return team;
+    }));
 
+    setStats(prev => ({
+        ...prev,
+        totalGameTime: totalGameTime,
+        wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
+    }));
+
+    // Проверяем, есть ли еще команды в очереди
+    const nextQueueIndex = currentQueueIndex + 1;
+    
+    if (nextQueueIndex < teamQueue.length) {
+        // Есть следующая команда - показываем экран готовности для следующей команды
+        setCurrentQueueIndex(nextQueueIndex);
+        
+        // Сбрасываем статистику для новой команды
+        setWordsGuessed(0);
+        setCurrentStreak(0);
+        setMaxCombo(0);
+        
+        // Показываем экран готовности для следующей команды
+        setTimeout(() => {
+            setGameState('ready');
+            if (soundEnabled) playSpecial();
+        }, 1500);
+    } else {
+        // Все команды отыграли - показываем финальные результаты
         const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
         const winner = sortedTeams[0];
 
@@ -1130,7 +1174,8 @@ const NewYearCharades = () => {
             setShowFireworks(false);
             setShowSnow(false);
         }, 5000);
-    };
+    }
+};
 
     const resetGame = () => {
         setGameState('menu');
@@ -1773,7 +1818,7 @@ const NewYearCharades = () => {
                                                                                             players: t.players.filter(p => p.id !== player.id),
                                                                                             captain: t.captain?.id === player.id ?
                                                                                                 (t.players.length > 1 ? t.players.find(p => p.id !== player.id) || null : null)
-                                                                                                        : t.captain
+                                                                                                : t.captain
                                                                                         };
                                                                                     }
                                                                                     return t;
@@ -1955,7 +2000,8 @@ const NewYearCharades = () => {
     }
 
     if (gameState === 'ready') {
-        const team = teams[currentTeam];
+    const currentTeamIndex = teamQueue[currentQueueIndex] || 0;
+    const team = teams[currentTeamIndex];
 
         // Случайно выбираем игроков для отображения в READY SCREEN
         const selectPlayersForDisplay = () => {
@@ -2103,7 +2149,8 @@ const NewYearCharades = () => {
 
     // PLAYING SCREEN с новой логикой для Blitz
     if (gameState === 'playing' && currentCard) {
-        const currentTeamData = teams[currentTeam];
+    const currentTeamIndex = teamQueue[currentQueueIndex] || 0;
+    const currentTeamData = teams[currentTeamIndex];
 
         return (
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
