@@ -691,6 +691,30 @@ const NewYearCharades = () => {
             return;
         }
 
+        // Создаем очередь команд
+        const queue = [...Array(teams.length).keys()];
+        // Перемешиваем массив для случайного порядка
+        for (let i = queue.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [queue[i], queue[j]] = [queue[j], queue[i]];
+        }
+
+        setTeamQueue(queue);
+        setCurrentQueueIndex(0);
+
+        // Сбрасываем статистику для всех команд
+        setTeams(prev => prev.map(team => ({
+            ...team,
+            score: 0,
+            correctGuesses: 0,
+            skippedWords: 0,
+            totalWordsGuessed: 0,
+            averageTimePerWord: 0,
+            streak: 0,
+            maxStreak: 0
+        })));
+
+        // Переходим к экрану готовности
         setGameState('ready');
         if (soundEnabled) playSpecial();
     };
@@ -760,67 +784,85 @@ const NewYearCharades = () => {
 
     // НОВАЯ ЛОГИКА ДЛЯ РЕЖИМА BLITZ - СТАРТ ИГРЫ
     const startBlitzGame = () => {
-    // Создаем очередь из всех команд
-    const queue = teams.map((_, index) => index);
-    setTeamQueue(queue);
-    setCurrentQueueIndex(0);
-    
-    // Начинаем игру для первой команды
-    startTeamTurn(queue[0]);
-};
+        // Создаем очередь из всех команд (случайный порядок)
+        const queue = [...Array(teams.length).keys()];
+        // Перемешиваем массив для случайного порядка
+        for (let i = queue.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [queue[i], queue[j]] = [queue[j], queue[i]];
+        }
 
-const startTeamTurn = (teamIndex: number) => {
-    setCurrentTeam(teamIndex);
-    
-    // Случайно выбираем объясняющего и угадывающего для этой команды
-    const selectRandomPlayers = () => {
-        const currentTeamData = teams[teamIndex];
-        if (!currentTeamData || currentTeamData.players.length < 2) return;
+        setTeamQueue(queue);
+        setCurrentQueueIndex(0);
 
-        const players = [...currentTeamData.players];
+        // Сбрасываем статистику для всех команд
+        setTeams(prev => prev.map(team => ({
+            ...team,
+            score: 0,
+            correctGuesses: 0,
+            skippedWords: 0,
+            totalWordsGuessed: 0,
+            averageTimePerWord: 0,
+            streak: 0,
+            maxStreak: 0
+        })));
 
-        // Случайно выбираем объясняющего
-        const explainerIndex = Math.floor(Math.random() * players.length);
-        const selectedExplainer = players[explainerIndex];
-
-        // Удаляем объясняющего из массива
-        players.splice(explainerIndex, 1);
-
-        // Случайно выбираем угазывающего из оставшихся
-        const selectedGuesser = players.length > 0
-            ? players[Math.floor(Math.random() * players.length)]
-            : selectedExplainer; // если в команде всего 1 игрок
-
-        setExplainer(selectedExplainer);
-        setGuesser(selectedGuesser);
+        // Начинаем игру для первой команды
+        setGameState('ready');
     };
 
-    selectRandomPlayers();
-    
-    setIsGameActive(true);
-    setGameStartTime(Date.now());
-    setWordsGuessed(0);
-    setCurrentStreak(0);
-    setMaxCombo(0);
-    
-    // Устанавливаем общее время игры в зависимости от выбранной сложности
-    const gameTime = difficultySettings[difficulty].time;
-    setTotalGameTime(gameTime);
-    setTimeLeft(gameTime);
-    
-    drawCard();
-    setGameState('playing');
-    setAnimateCard(true);
-    setShowWord(false);
-    
-    setTimeout(() => setAnimateCard(false), 500);
-    
-    if (soundEnabled) {
-        playCardFlip();
-        playSpecial();
-    }
-    generateParticles('sparkle', 20);
-};
+    const startTeamTurn = (teamIndex: number) => {
+        setCurrentTeam(teamIndex);
+
+        // Случайно выбираем объясняющего и угадывающего для этой команды
+        const selectRandomPlayers = () => {
+            const currentTeamData = teams[teamIndex];
+            if (!currentTeamData || currentTeamData.players.length < 2) return;
+
+            const players = [...currentTeamData.players];
+
+            // Случайно выбираем объясняющего
+            const explainerIndex = Math.floor(Math.random() * players.length);
+            const selectedExplainer = players[explainerIndex];
+
+            // Удаляем объясняющего из массива
+            players.splice(explainerIndex, 1);
+
+            // Случайно выбираем угазывающего из оставшихся
+            const selectedGuesser = players.length > 0
+                ? players[Math.floor(Math.random() * players.length)]
+                : selectedExplainer; // если в команде всего 1 игрок
+
+            setExplainer(selectedExplainer);
+            setGuesser(selectedGuesser);
+        };
+
+        selectRandomPlayers();
+
+        setIsGameActive(true);
+        setGameStartTime(Date.now());
+        setWordsGuessed(0);
+        setCurrentStreak(0);
+        setMaxCombo(0);
+
+        // Устанавливаем общее время игры в зависимости от выбранной сложности
+        const gameTime = difficultySettings[difficulty].time;
+        setTotalGameTime(gameTime);
+        setTimeLeft(gameTime);
+
+        drawCard();
+        setGameState('playing');
+        setAnimateCard(true);
+        setShowWord(false);
+
+        setTimeout(() => setAnimateCard(false), 500);
+
+        if (soundEnabled) {
+            playCardFlip();
+            playSpecial();
+        }
+        generateParticles('sparkle', 20);
+    };
 
     // Модифицированная функция для рисования карточки
     const drawCard = () => {
@@ -1117,65 +1159,64 @@ const startTeamTurn = (teamIndex: number) => {
     };
 
     // Модифицированная функция endGame для режима Blitz
-const endGame = () => {
-    setIsGameActive(false);
-    
-    // Рассчитываем слова в минуту для текущей команды
-    const gameDuration = totalGameTime / 60; // в минутах
-    const wordsPerMinute = gameDuration > 0 ? wordsGuessed / gameDuration : 0;
-    
-    // Обновляем статистику текущей команды
-    setTeams(prev => prev.map((team, idx) => {
-        if (idx === currentTeam) {
-            return {
-                ...team,
-                wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
-            };
-        }
-        return team;
-    }));
+    const endGame = () => {
+        setIsGameActive(false);
 
-    setStats(prev => ({
-        ...prev,
-        totalGameTime: totalGameTime,
-        wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
-    }));
+        // Рассчитываем слова в минуту для текущей команды
+        const gameDuration = totalGameTime / 60;
+        const wordsPerMinute = gameDuration > 0 ? wordsGuessed / gameDuration : 0;
 
-    // Проверяем, есть ли еще команды в очереди
-    const nextQueueIndex = currentQueueIndex + 1;
-    
-    if (nextQueueIndex < teamQueue.length) {
-        // Есть следующая команда - показываем экран готовности для следующей команды
-        setCurrentQueueIndex(nextQueueIndex);
-        
-        // Сбрасываем статистику для новой команды
-        setWordsGuessed(0);
-        setCurrentStreak(0);
-        setMaxCombo(0);
-        
-        // Показываем экран готовности для следующей команды
-        setTimeout(() => {
+        // Обновляем статистику текущей команды
+        setTeams(prev => prev.map((team, idx) => {
+            if (idx === currentTeam) {
+                return {
+                    ...team,
+                    wordsPerMinute: Math.round(wordsPerMinute * 100) / 100,
+                    totalWordsGuessed: wordsGuessed
+                };
+            }
+            return team;
+        }));
+
+        setStats(prev => ({
+            ...prev,
+            totalGameTime: totalGameTime,
+            wordsPerMinute: Math.round(wordsPerMinute * 100) / 100
+        }));
+
+        // Проверяем, есть ли еще команды в очереди
+        const nextQueueIndex = currentQueueIndex + 1;
+
+        if (nextQueueIndex < teamQueue.length) {
+            // Есть следующая команда - переходим к экрану готовности
+            setCurrentQueueIndex(nextQueueIndex);
+
+            // Сбрасываем статистику для новой команды
+            setWordsGuessed(0);
+            setCurrentStreak(0);
+            setMaxCombo(0);
+
+            // Показываем экран готовности для следующей команды
             setGameState('ready');
             if (soundEnabled) playSpecial();
-        }, 1500);
-    } else {
-        // Все команды отыграли - показываем финальные результаты
-        const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
-        const winner = sortedTeams[0];
+        } else {
+            // Все команды отыграли - показываем финальные результаты
+            const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+            const winner = sortedTeams[0];
 
-        setGameState('results');
-        setShowFireworks(true);
-        setShowSnow(true);
+            setGameState('results');
+            setShowFireworks(true);
+            setShowSnow(true);
 
-        if (soundEnabled) playWin();
-        generateParticles('celebration', 100);
+            if (soundEnabled) playWin();
+            generateParticles('celebration', 100);
 
-        setTimeout(() => {
-            setShowFireworks(false);
-            setShowSnow(false);
-        }, 5000);
-    }
-};
+            setTimeout(() => {
+                setShowFireworks(false);
+                setShowSnow(false);
+            }, 5000);
+        }
+    };
 
     const resetGame = () => {
         setGameState('menu');
@@ -1967,28 +2008,12 @@ const endGame = () => {
                                 </div>
                                 <button
                                     onClick={() => {
-                                        if (teams.length < 2) {
-                                            alert('Անհրաժեշտ է առնվազն 2 թիմ խաղի համար');
-                                            return;
-                                        }
-
-                                        if (teams.some(team => team.players.length === 0)) {
-                                            alert('Բոլոր թիմերը պետք է ունենան առնվազն 1 խաղացող');
-                                            return;
-                                        }
-
-                                        const totalPlayers = teams.reduce((sum, team) => sum + team.players.length, 0);
-                                        if (totalPlayers < 4) {
-                                            alert('Ընդհանուր առնվազն 4 խաղացող պետք է լինի բոլոր թիմերում');
-                                            return;
-                                        }
-
-                                        setGameState('ready');
+                                        startGameWithTeams(); // Сначала создаем очередь команд
                                         if (soundEnabled) playSpecial();
                                     }}
-                                    className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold py-4 rounded-2xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
+                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
                                 >
-                                    <Play className="w-6 h-6" />
+                                    <Play className="w-10 h-10" />
                                     Սկսել Խաղը
                                 </button>
                             </div>
@@ -2000,146 +2025,71 @@ const endGame = () => {
     }
 
     if (gameState === 'ready') {
-    const currentTeamIndex = teamQueue[currentQueueIndex] || 0;
-    const team = teams[currentTeamIndex];
+        const currentTeamIndex = teamQueue[currentQueueIndex];
+        const team = teams[currentTeamIndex];
 
-        // Случайно выбираем игроков для отображения в READY SCREEN
-        const selectPlayersForDisplay = () => {
-            if (!team || team.players.length < 2) return null;
+        if (!team) {
+            // Если команда не найдена, создаем очередь заново
+            const queue = [...Array(teams.length).keys()];
+            for (let i = queue.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [queue[i], queue[j]] = [queue[j], queue[i]];
+            }
+            setTeamQueue(queue);
+            setCurrentQueueIndex(0);
 
-            const players = [...team.players];
-            const explainerIndex = Math.floor(Math.random() * players.length);
-            const explainer = players[explainerIndex];
+            // Показываем экран готовности для первой команды
+            const firstTeam = teams[queue[0]];
+            if (firstTeam) {
+                return (
+                    <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4`}>
+                        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 border-2 border-white/20 text-center max-w-2xl">
+                            <div className="text-8xl mb-6 animate-bounce">🎮</div>
+                            <h2 className="text-5xl font-bold text-white mb-4">Խաղը Սկսվում է!</h2>
+                            <div className="mb-8">
+                                <div className="text-4xl font-black text-white mb-2">{firstTeam.name}</div>
+                                <div className="text-white/60 text-xl">Պատրաստվեք բացատրել բառերը</div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const currentTeamIndex = teamQueue[currentQueueIndex];
+                                    if (currentTeamIndex !== undefined) {
+                                        startTeamTurn(currentTeamIndex);
+                                    }
+                                }}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-6 px-12 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl"
+                            >
+                                Սկսել Խաղը
+                            </button>
+                        </div>
+                    </div>
+                );
+            } else {
+                // Если вообще нет команд, возвращаемся в меню
+                setGameState('menu');
+                return null;
+            }
+        }
 
-            players.splice(explainerIndex, 1);
-            const guesser = players.length > 0
-                ? players[Math.floor(Math.random() * players.length)]
-                : explainer;
-
-            return { explainer, guesser };
-        };
-
-        const selectedPlayers = selectPlayersForDisplay();
-
+        // Если команда найдена, показываем экран готовности для нее
         return (
-            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4 flex items-center justify-center`}>
-                <FireworksEffect />
-                <ParticleEffect type="sparkle" />
-
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 max-w-2xl w-full border-2 border-white/20 shadow-2xl text-center">
-                    <div className="text-7xl mb-6 animate-bounce">
-                        {team?.emoji || '🎭'}
-                    </div>
-
-                    <h2 className="text-5xl font-black text-white mb-4">
-                        Թիմի Հերթը
-                    </h2>
-                    <div className="text-6xl font-black text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text mb-8">
-                        {team?.name || 'Թիմ'}
-                    </div>
-
-                    {/* Добавляем информацию о режиме Blitz */}
-                    {gameMode === 'blitz' && (
-                        <div className="mb-6 p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-500/30">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <Zap className="w-6 h-6 text-yellow-400" />
-                                <div className="text-white font-bold text-xl">ԲԼԻՏԶ ՌԵԺԻՄ</div>
-                            </div>
-                            <div className="text-center text-white/80">
-                                <div className="text-4xl font-black text-yellow-300 mb-2">{difficultySettings[difficulty].time / 60} րոպե</div>
-                                <div className="text-sm">Ուշադրություն! Հարցերը չեն ավարտվում մինչև ժամանակի ավարտը</div>
-                                <div className="text-xs text-yellow-300 mt-1">Որքան շատ բառ գուշակեք, այնքան շատ միավոր կստանաք!</div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Информация о команде */}
-                    <div className="mb-6 bg-white/5 rounded-xl p-4 border border-white/20">
-                        <div className="flex items-center justify-center gap-4 mb-3">
-                            <div className="text-2xl">👥</div>
-                            <div>
-                                <div className="text-white font-bold text-xl">{team?.players.length || 0} խաղացող</div>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {team?.players.map(player => (
-                                <div key={player.id} className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full">
-                                    <span>{player.avatar}</span>
-                                    <span className="text-white text-sm">{player.name}</span>
-                                </div>
-                            ))}
+            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4`}>
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 border-2 border-white/20 text-center max-w-2xl">
+                    <div className="text-8xl mb-6 animate-bounce">🎮</div>
+                    <h2 className="text-5xl font-bold text-white mb-4">Խաղը Սկսվում է!</h2>
+                    <div className="mb-8">
+                        <div className="text-4xl font-black text-white mb-2">{team.name}</div>
+                        <div className="text-white/60 text-xl">Պատրաստվեք բացատրել բառերը</div>
+                        <div className="mt-4 text-white/40">
+                            Խաղային ռեժիմ: {gameModes[gameMode].name}
                         </div>
                     </div>
-
-                    {/* Показываем, кто будет объяснять и угадывать */}
-                    <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-2xl border border-blue-500/30">
-                        <h3 className="text-2xl font-bold text-white mb-4">Հերթը ձերն է!</h3>
-
-                        <div className="grid grid-cols-2 gap-6 mb-6">
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                                <div className="text-4xl mb-2">🎭</div>
-                                <div className="text-white/60 text-sm mb-1">Բացատրող</div>
-                                <div className="text-white font-bold text-xl">
-                                    {selectedPlayers?.explainer?.name || '...'}
-                                </div>
-                                <div className="text-white/60 text-xs mt-1">
-                                    Կտեսնի բառը
-                                </div>
-                            </div>
-
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                                <div className="text-4xl mb-2">🎯</div>
-                                <div className="text-white/60 text-sm mb-1">Կռահող</div>
-                                <div className="text-white font-bold text-xl">
-                                    {selectedPlayers?.guesser?.name || '...'}
-                                </div>
-                                <div className="text-white/60 text-xs mt-1">
-                                    Կփակի աչքերը
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl">
-                            <div className="text-white/80 text-sm">
-                                <span className="text-yellow-300 font-bold">{selectedPlayers?.guesser?.name || '...'}</span> - փակի՛ր աչքերդ
-                            </div>
-                            <div className="text-white/80 text-sm mt-1">
-                                <span className="text-green-300 font-bold">{selectedPlayers?.explainer?.name || '...'}</span> - պատրաստվի՛ր բացատրել
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-8">
-                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
-                            <div className="text-yellow-400 text-3xl mb-1">🏆</div>
-                            <div className="text-white/60 text-sm">Միավոր</div>
-                            <div className="text-white text-3xl font-bold">{team?.score || 0}</div>
-                        </div>
-                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
-                            <div className="text-blue-400 text-3xl mb-1">⚡</div>
-                            <div className="text-white/60 text-sm">Տուր</div>
-                            <div className="text-white text-3xl font-bold">{round}{gameMode === 'classic' ? `/${maxRounds}` : ''}</div>
-                        </div>
-                        <div className="bg-white/10 rounded-xl p-4 border border-white/20 hover:scale-105 transition-all">
-                            <div className="text-green-400 text-3xl mb-1">🔥</div>
-                            <div className="text-white/60 text-sm">Հաջողություն</div>
-                            <div className="text-white text-3xl font-bold">{streak}</div>
-                        </div>
-                    </div>
-
                     <button
                         onClick={() => {
-                            if (gameMode === 'blitz') {
-                                startBlitzGame();
-                            } else {
-                                // Здесь можно добавить логику для других режимов
-                                startBlitzGame(); // Временно используем ту же функцию
-                            }
-                            if (soundEnabled) playSpecial();
+                            startTeamTurn(currentTeamIndex);
                         }}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-8 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3"
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-3xl font-bold py-6 px-12 rounded-2xl shadow-xl transition-all transform hover:scale-105 hover:shadow-2xl"
                     >
-                        <Play className="w-10 h-10" />
                         Սկսել Խաղը
                     </button>
                 </div>
@@ -2149,8 +2099,8 @@ const endGame = () => {
 
     // PLAYING SCREEN с новой логикой для Blitz
     if (gameState === 'playing' && currentCard) {
-    const currentTeamIndex = teamQueue[currentQueueIndex] || 0;
-    const currentTeamData = teams[currentTeamIndex];
+        const currentTeamIndex = teamQueue[currentQueueIndex] || 0;
+        const currentTeamData = teams[currentTeamIndex];
 
         return (
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
