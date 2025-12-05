@@ -2103,9 +2103,19 @@ const NewYearCharades = () => {
         const currentTeamData = teams[currentTeamIndex];
 
         return (
-            <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
+            <div className={`relative min-h-screen bg-gradient-to-br ${getThemeClasses()} p-4`}>
                 {showConfetti && <ParticleEffect type="confetti" />}
                 <FireworksEffect />
+
+                <Button
+                    onClick={() => {
+                        router.push('/');
+                    }}
+                    className="absolute top-10 left-10 bg-white/10 backdrop-blur-lg hover:bg-white/20 border border-white/20 hover:scale-105 transition-all group"
+                >
+                    <span className="group-hover:-translate-x-1 transition-transform">←</span>
+                    <span className="ml-2">Գլխավոր</span>
+                </Button>
 
                 <div className="max-w-6xl mx-auto py-8">
                     {/* Header with Team Info and Controls */}
