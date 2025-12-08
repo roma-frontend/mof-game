@@ -174,7 +174,7 @@ const GeoMysteryGame = () => {
             points: 400,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1597408249735-48e91d6c6ad3?q=80&w=1074&auto=format&fit=crop'
+                url: 'https://images.unsplash.com/photo-1671371316579-2ad9e609fcff?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
             },
             funFact: 'Մասամբ ժայռափոր է, անվանվել է այստեղ պահվող Սուրբ Նշանից',
             difficulty: 'medium'
