@@ -1697,7 +1697,7 @@ const GeoMysteryGame = () => {
                                             setTimeout(() => nextQuestion(), 2000);
                                         }}
                                         variant="outline"
-                                        className="border-white/30 text-white/70 hover:bg-white/10"
+                                        className="background-transparent border-white/30 text-white/70 hover:bg-white/10"
                                     >
                                         <SkipForward className="w-5 h-5 mr-2" />
                                         Բաց թողնել հարցը
