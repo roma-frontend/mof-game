@@ -63,18 +63,66 @@ const GuessTheMelody = () => {
 
   const avatarColors = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '🟤', '⚫', '⚪', '🔷', '🔶', '⭐', '💎', '🎯', '🎨', '🎭'];
 
+  // const songs: Song[] = [
+  //   { id: 1, file: '/song1.mp3', title: 'My Kind of Present', artist: 'Meghan Trainor', difficulty: 'easy', year: '2022' },
+  //   { id: 2, file: '/song2.mp3', title: 'Snowman', artist: 'Sia', difficulty: 'medium', year: '2021' },
+  //   { id: 3, file: '/song3.mp3', title: 'White Christmas', artist: 'Bing Crosby', difficulty: 'easy', year: '1942' },
+  //   { id: 4, file: '/song4.mp3', title: 'Underneath the Tree', artist: 'Kelly Clarkson', difficulty: 'medium', year: '2020' },
+  //   { id: 5, file: '/song5.mp3', title: "It's Beginning to Look a Lot Like Christmas", artist: 'Michael Bublé', difficulty: 'easy', year: '2011' },
+  //   { id: 6, file: '/song6.mp3', title: 'Jingle Bells (Swing Version)', artist: 'Various Artists', difficulty: 'medium', year: '1857' },
+  //   { id: 7, file: '/song7.mp3', title: 'Merry Christmas', artist: 'Ed Sheeran & Elton John', difficulty: 'hard', year: '2021' },
+  //   { id: 8, file: '/song8.mp3', title: 'Blue Christmas', artist: 'Elvis Presley', difficulty: 'easy', year: '1957' },
+  //   { id: 9, file: '/song9.mp3', title: 'Christmas Tree Farm', artist: 'Taylor Swift', difficulty: 'medium', year: '2019' },
+  //   { id: 10, file: '/song10.mp3', title: 'Cindy Lou Who', artist: 'Sabrina Carpenter', difficulty: 'hard', year: '2023' },
+  // ];
+
   const songs: Song[] = [
-    { id: 1, file: '/song1.mp3', title: 'My Kind of Present', artist: 'Meghan Trainor', difficulty: 'easy', year: '2022' },
-    { id: 2, file: '/song2.mp3', title: 'Snowman', artist: 'Sia', difficulty: 'medium', year: '2021' },
-    { id: 3, file: '/song3.mp3', title: 'White Christmas', artist: 'Bing Crosby', difficulty: 'easy', year: '1942' },
-    { id: 4, file: '/song4.mp3', title: 'Underneath the Tree', artist: 'Kelly Clarkson', difficulty: 'medium', year: '2020' },
-    { id: 5, file: '/song5.mp3', title: "It's Beginning to Look a Lot Like Christmas", artist: 'Michael Bublé', difficulty: 'easy', year: '2011' },
-    { id: 6, file: '/song6.mp3', title: 'Jingle Bells (Swing Version)', artist: 'Various Artists', difficulty: 'medium', year: '1857' },
-    { id: 7, file: '/song7.mp3', title: 'Merry Christmas', artist: 'Ed Sheeran & Elton John', difficulty: 'hard', year: '2021' },
-    { id: 8, file: '/song8.mp3', title: 'Blue Christmas', artist: 'Elvis Presley', difficulty: 'easy', year: '1957' },
-    { id: 9, file: '/song9.mp3', title: 'Christmas Tree Farm', artist: 'Taylor Swift', difficulty: 'medium', year: '2019' },
-    { id: 10, file: '/song10.mp3', title: 'Cindy Lou Who', artist: 'Sabrina Carpenter', difficulty: 'hard', year: '2023' },
-  ];
+  // РУССКИЕ ПОПУЛЯРНЫЕ (EASY) - Очень известные
+  { id: 1, file: '/songs/rus1.mp3', title: 'Миллион алых роз', artist: 'Алла Пугачева', difficulty: 'easy', year: '1983' },
+  { id: 2, file: '/songs/rus2.mp3', title: 'Прекрасное далёко', artist: 'Е. Крылатов', difficulty: 'easy', year: '1984' },
+  { id: 3, file: '/songs/rus3.mp3', title: 'Кукушка', artist: 'Виктор Цой', difficulty: 'easy', year: '1990' },
+  { id: 4, file: '/songs/rus4.mp3', title: 'Я сошла с ума', artist: 't.A.T.u.', difficulty: 'easy', year: '2000' },
+  { id: 5, file: '/songs/rus5.mp3', title: 'В лесу родилась ёлочка', artist: 'Народная', difficulty: 'easy', year: '1905' },
+  { id: 6, file: '/songs/rus6.mp3', title: 'Олимпиада-80', artist: 'Давид Тухманов', difficulty: 'easy', year: '1980' },
+  { id: 7, file: '/songs/rus7.mp3', title: 'Обижаюсь', artist: 'Лариса Долина', difficulty: 'easy', year: '1996' },
+  { id: 8, file: '/songs/rus8.mp3', title: 'Голубой вагон', artist: 'В. Шаинский', difficulty: 'easy', year: '1974' },
+
+  // РУССКИЕ СОВРЕМЕННЫЕ (MEDIUM) - Популярные, но не супер-очевидные
+  { id: 9, file: '/songs/rus9.mp3', title: 'Ятл', artist: 'Zivert', difficulty: 'medium', year: '2019' },
+  { id: 10, file: '/songs/rus10.mp3', title: 'Дождь', artist: 'МакSим', difficulty: 'medium', year: '2007' },
+  { id: 11, file: '/songs/rus11.mp3', title: 'Нас не догонят', artist: 't.A.T.u.', difficulty: 'medium', year: '2002' },
+  { id: 12, file: '/songs/rus12.mp3', title: 'Молитва', artist: 'Би-2', difficulty: 'medium', year: '1999' },
+  { id: 13, file: '/songs/rus13.mp3', title: 'Белые розы', artist: 'Юрий Шатунов', difficulty: 'medium', year: '1989' },
+  { id: 14, file: '/songs/rus14.mp3', title: 'Иногда', artist: 'Алсу', difficulty: 'medium', year: '2000' },
+  { id: 15, file: '/songs/rus15.mp3', title: 'Самый дорогой человек', artist: 'Нервы', difficulty: 'medium', year: '2017' },
+  { id: 16, file: '/songs/rus16.mp3', title: 'Трава у дома', artist: 'Земляне', difficulty: 'medium', year: '1983' },
+
+  // АРМЯНСКИЕ КЛАССИЧЕСКИЕ (EASY/MEDIUM) - Все знают
+  { id: 17, file: '/songs/arm1.mp3', title: 'Կռունկ (Krounk)', artist: 'Ս. Նազարյան', difficulty: 'easy', year: '1980' },
+  { id: 18, file: '/songs/arm2.mp3', title: 'Երևան (Yerevan)', artist: 'Արմենչիկ', difficulty: 'easy', year: '2003' },
+  { id: 19, file: '/songs/arm3.mp3', title: 'Մեր Երևանը (Mer Yerevany)', artist: 'Ռուբեն Ահարոնյան', difficulty: 'easy', year: '1971' },
+  { id: 20, file: '/songs/arm4.mp3', title: 'Իմ անուշ հայրենիք (Im Anush Hayrenik)', artist: 'Վ. Սարգսյան', difficulty: 'easy', year: '1995' },
+  { id: 21, file: '/songs/arm5.mp3', title: 'Ծառ էի (Tsar ei)', artist: 'Հայկո', difficulty: 'medium', year: '2014' },
+  { id: 22, file: '/songs/arm6.mp3', title: 'Իմ մայրիկ (Im Mayrik)', artist: 'Արտաշես Ավետիսյան', difficulty: 'easy', year: '1970' },
+  { id: 23, file: '/songs/arm7.mp3', title: 'Արարատ (Ararat)', artist: 'Արտո Թունջբոյաջյան', difficulty: 'medium', year: '2005' },
+
+  // АРМЯНСКИЕ ПОП (MEDIUM) - Современные хиты
+  { id: 24, file: '/songs/arm8.mp3', title: 'Բարի լույս (Bari Luys)', artist: 'Սնափ', difficulty: 'medium', year: '2020' },
+  { id: 25, file: '/songs/arm9.mp3', title: 'Քեզ համար (Kez Hamar)', artist: 'Արսեն', difficulty: 'medium', year: '2018' },
+  { id: 26, file: '/songs/arm10.mp3', title: 'Դու (Du)', artist: 'Թաթե (Tate)', difficulty: 'medium', year: '2021' },
+  { id: 27, file: '/songs/arm11.mp3', title: 'Հայաստան (Hayastan)', artist: 'Սիս (Sis)', difficulty: 'medium', year: '2015' },
+  { id: 28, file: '/songs/arm12.mp3', title: 'Մայրիկ (Mayrik)', artist: 'Արմեն Ալիյան', difficulty: 'easy', year: '2008' },
+
+  // МЕЖДУНАРОДНЫЕ ХИТЫ (MEDIUM/HARD) - Всем известные
+  { id: 29, file: '/songs/int1.mp3', title: 'Despacito', artist: 'Luis Fonsi', difficulty: 'medium', year: '2017' },
+  { id: 30, file: '/songs/int2.mp3', title: 'Gangnam Style', artist: 'PSY', difficulty: 'easy', year: '2012' },
+  { id: 31, file: '/songs/int3.mp3', title: 'Happy Birthday', artist: 'Традиционная', difficulty: 'easy', year: '1893' },
+  { id: 32, file: '/songs/int4.mp3', title: 'We Will Rock You', artist: 'Queen', difficulty: 'medium', year: '1977' },
+  { id: 33, file: '/songs/int5.mp3', title: 'Let It Go', artist: 'Frozen', difficulty: 'medium', year: '2013' },
+  { id: 34, file: '/songs/int6.mp3', title: 'My Heart Will Go On', artist: 'Celine Dion', difficulty: 'medium', year: '1997' },
+  { id: 35, file: '/songs/int7.mp3', title: 'Smells Like Teen Spirit', artist: 'Nirvana', difficulty: 'hard', year: '1991' },
+  { id: 36, file: '/songs/int8.mp3', title: 'Billie Jean', artist: 'Michael Jackson', difficulty: 'medium', year: '1983' },
+];
 
   const wishes = [
     '🎤 քորել հաղթողի մեջքը',
