@@ -13,7 +13,8 @@ import {
     Trash2, User, Navigation, Camera, Plane, Ship,
     Target, Timer as TimerIcon, Users as UsersIcon, Flag,
     Sun, Moon, Cloud, Wind, Thermometer, Droplets,
-    Gamepad2, Crown as CrownIcon, Map as MapIcon
+    Gamepad2, Crown as CrownIcon, Map as MapIcon,
+    CheckCircle, XCircle, Eye, EyeOff
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import * as L from 'leaflet';
@@ -21,7 +22,7 @@ import 'leaflet/dist/leaflet.css';
 
 interface GeoQuestion {
     id: number;
-    type: 'map' | 'photo' | 'landmark' | 'flag' | 'culture' | 'satellite' | 'climate' | 'cityscape' | 'streetview'; // добавили 'streetview'
+    type: 'map' | 'photo' | 'landmark' | 'flag' | 'culture' | 'satellite' | 'climate' | 'cityscape' | 'streetview';
     title: string;
     hint: string;
     answer: string;
@@ -42,8 +43,8 @@ interface GeoQuestion {
     area?: number;
     language?: string;
     currency?: string;
-    height?: number; // добавили опциональное свойство
-    width?: number; // добавили опциональное свойство
+    height?: number;
+    width?: number;
 }
 
 interface Team {
@@ -74,13 +75,16 @@ const GeoMysteryGame = () => {
     const [gamePhase, setGamePhase] = useState<'setup' | 'intro' | 'playing' | 'results'>('setup');
     const [timeLeft, setTimeLeft] = useState(45);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [showAnswer, setShowAnswer] = useState(false);
-    const [selectedAnswer, setSelectedAnswer] = useState('');
     const [soundOn, setSoundOn] = useState(true);
     const [hintUsed, setHintUsed] = useState(false);
     const [isAddingTeam, setIsAddingTeam] = useState(false);
     const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
     const [streetViewLoaded, setStreetViewLoaded] = useState(false);
+    
+    // Новые состояния для системы ответов
+    const [userAnswer, setUserAnswer] = useState('');
+    const [answerRevealed, setAnswerRevealed] = useState(false);
+    const [answerStatus, setAnswerStatus] = useState<'pending' | 'correct' | 'incorrect'>('pending');
 
     // Настройки
     const [config, setConfig] = useState<GameConfig>({
@@ -106,13 +110,13 @@ const GeoMysteryGame = () => {
 
     const [activeTeam, setActiveTeam] = useState(0);
 
-    // Огромная база географических вопросов (150+ вопросов)
+    // База географических вопросов (армянский контент)
     const questions: GeoQuestion[] = [
-        // Армения и регион
+        // Հայաստան և տարածաշրջան
         {
             id: 1,
             type: 'landmark',
-            title: '🏔️ Ճանաչեք այս հայտնի լեռը',
+            title: '🏔️ Ճանաչե՞ք այս հայտնի լեռը',
             hint: 'Կրակածին, Արարատյան դաշտից տեսանելի',
             answer: 'Արարատ լեռ',
             country: 'Հայաստան',
@@ -120,9 +124,9 @@ const GeoMysteryGame = () => {
             points: 300,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1622624751362-328ec4aa688f?q=80&w=2087&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1622624751362-328ec4aa688f?q=80&w=2087&auto=format&fit=crop'
             },
-            funFact: 'Մասունքի համար ավանդաբար համարվում է Նոյյան տապանը գտնվելու վայրը',
+            funFact: 'Ավանդաբար համարվում է Նոյյան տապանի գտնվելու վայրը',
             difficulty: 'easy',
             height: 5137
         },
@@ -131,15 +135,15 @@ const GeoMysteryGame = () => {
             type: 'landmark',
             title: '⛪ Ո՞ր հայկական մայր տաճարն է պատկերված',
             hint: 'Աշխարհի ամենահին պետական եկեղեցին',
-            answer: 'Էջմիածին',
+            answer: 'Էջմիածին Մայր Տաճար',
             country: 'Հայաստան',
             continent: 'Ասիա',
             points: 350,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1754258517128-5b6b6d7ebf7c?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1754258517128-5b6b6d7ebf7c?q=80&w=688&auto=format&fit=crop'
             },
-            funFact: 'Հիմնադրվել է 303 թվականին, Հայ առաքելական եկեղեցու կենտրոն',
+            funFact: 'Հիմնադրվել է 303 թվականին, Հայ Առաքելական եկեղեցու կենտրոն',
             difficulty: 'medium'
         },
         {
@@ -153,43 +157,42 @@ const GeoMysteryGame = () => {
             points: 250,
             media: {
                 type: 'map',
-                url: 'https://images.unsplash.com/photo-1675855545323-446b6e8308e7?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1675855545323-446b6e8308e7?q=80&w=1074&auto=format&fit=crop'
             },
-            funFact: 'Աշխարհի առաջին քրիստոնյա երկիրը (301 թ.)',
+            funFact: 'Աշխարհի առաջին քրիստոնյա պետությունը (301 թ.)',
             difficulty: 'easy',
             area: 29743
         },
         {
             id: 4,
-            type: 'satellite',
-            title: '🛰️ Այս լճի արբանյակային պատկերը',
-            hint: 'Համարվում է ծով, աշխարհի ամենամեծ լիճը',
-            answer: 'Կասպից ծով',
-            country: 'Բազմաթիվ երկրներ',
-            continent: 'Եվրասիա',
+            type: 'landmark',
+            title: '🏰 Այս հնագույն մենաստանը',
+            hint: 'Հայաստան, Գեղարդ, ժայռափոր եկեղեցի',
+            answer: 'Գեղարդավանք',
+            country: 'Հայաստան',
+            continent: 'Ասիա',
             points: 400,
             media: {
                 type: 'image',
-                url: 'https://media.istockphoto.com/id/652893500/photo/kazakhstan-from-space-during-sunrise.jpg?s=1024x1024&w=is&k=20&c=fdEIsonwMPgfjVoSvx_HYdCtsiFqZ4AKLk762YTXA5A='
+                url: 'https://images.unsplash.com/photo-1597408249735-48e91d6c6ad3?q=80&w=1074&auto=format&fit=crop'
             },
-            funFact: 'Ջրի ծավալով աշխարհի ամենամեծ ներցամաքային ջրամբարն է',
+            funFact: 'Մասամբ ժայռափոր է, անվանվել է այստեղ պահվող Սուրբ Նշանից',
             difficulty: 'medium'
         },
-        // Շինություններ
         {
             id: 5,
             type: 'landmark',
-            title: '🏛️ Ո՞ր հնագույն քաղաքն է պատկերված',
-            hint: 'Աշխարհի յոթ հրաշալիքներից մեկը կանգնած էր այստեղ',
-            answer: 'Աթենքի Ակրոպոլիս',
+            title: '🏛️ Այս հնագույն տաճարը',
+            hint: 'Հունաստան, Աթենք, աշխարհի յոթ հրաշալիքներից մեկը',
+            answer: 'Պարթենոն',
             country: 'Հունաստան',
             continent: 'Եվրոպա',
             points: 450,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1661963222829-cf9572881843?q=80&w=1361&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1661963222829-cf9572881843?q=80&w=1361&auto=format&fit=crop'
             },
-            funFact: 'Պարթենոնը կառուցվել է մ.թ.ա. 5-րդ դարում',
+            funFact: 'Կառուցվել է մ.թ.ա. 5-րդ դարում Աթենաս աստվածուհու համար',
             difficulty: 'hard',
             year: -447
         },
@@ -197,7 +200,7 @@ const GeoMysteryGame = () => {
             id: 6,
             type: 'landmark',
             title: '🗼 Այս հայտնի աշտարակը',
-            hint: 'Երկաթե, կառուցվել է Ֆրանսիայում 1889 թվականին',
+            hint: 'Ֆրանսիա, Պարիզ, կառուցվել է 1889 թվականին',
             answer: 'Էյֆելյան աշտարակ',
             country: 'Ֆրանսիա',
             continent: 'Եվրոպա',
@@ -213,33 +216,32 @@ const GeoMysteryGame = () => {
         {
             id: 7,
             type: 'cityscape',
-            title: '🌆 Ո՞ր մեգապոլիսն է տեսանելի',
-            hint: 'Միացյալ Նահանգներ, "Մեծ խնձոր"',
+            title: '🌆 Ո՞ր մեգապոլիսն է այս',
+            hint: 'ԱՄՆ, "Մեծ խնձոր", Ստատեն Այլենդ',
             answer: 'Նյու Յորք',
             country: 'ԱՄՆ',
             continent: 'Հյուսիսային Ամերիկա',
             points: 400,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1483653364400-eedcfb9f1f88?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1483653364400-eedcfb9f1f88?q=80&w=1170&auto=format&fit=crop'
             },
-            funFact: 'Մոտ 800 լեզուներով է խոսվում, աշխարհի ամենալեզվաբազմական քաղաքը',
+            funFact: 'Աշխարհի ամենալեզվաբազմական քաղաքը՝ 800 լեզուներով',
             difficulty: 'medium',
             population: 8800000
         },
-        // Բնության հրաշալիքներ
         {
             id: 8,
             type: 'landmark',
             title: '🏞️ Ո՞ր ջրվեժն է պատկերված',
-            hint: 'Աֆրիկա, աշխարհի ամենամեծ ջրվեժներից',
+            hint: 'Աֆրիկա, աշխարհի ամենամեծ ջրվեժներից մեկը',
             answer: 'Վիկտորիա ջրվեժ',
             country: 'Զամբիա/Զիմբաբվե',
             continent: 'Աֆրիկա',
             points: 450,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1618811308896-d279d72fdf4d?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1618811308896-d279d72fdf4d?q=80&w=1172&auto=format&fit=crop'
             },
             funFact: 'Տեղացիների կողմից կոչվում է "Քաղցրեղենի ծուխ"',
             difficulty: 'hard',
@@ -251,12 +253,12 @@ const GeoMysteryGame = () => {
             title: '🏜️ Ո՞ր անապատն է այս',
             hint: 'Աշխարհի ամենամեծ տաք անապատը',
             answer: 'Սահարա անապատ',
-            country: 'Բազմաթիվ երկրներ',
+            country: 'Աֆրիկա',
             continent: 'Աֆրիկա',
             points: 400,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1486314030120-d5ab85fe58cd?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1486314030120-d5ab85fe58cd?q=80&w=1176&auto=format&fit=crop'
             },
             funFact: 'Մակերեսով գրեթե հավասար է Միացյալ Նահանգներին',
             difficulty: 'medium',
@@ -273,25 +275,24 @@ const GeoMysteryGame = () => {
             points: 500,
             media: {
                 type: 'image',
-                url: 'https://images.unsplash.com/photo-1575819719798-83d97dd6949c?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://images.unsplash.com/photo-1575819719798-83d97dd6949c?q=80&w=1169&auto=format&fit=crop'
             },
             funFact: 'Բարձրությունը ծովի մակարդակից 8848 մետր է',
             difficulty: 'expert',
             height: 8848
         },
-        // Քաղաքներ և մշակույթ
         {
             id: 11,
             type: 'cityscape',
             title: '🏙️ Ո՞ր եվրոպական մայրաքաղաքն է',
-            hint: 'Գտնվում է Թամիզ գետի ափին, հայտնի է իր աշտարակով',
+            hint: 'Գտնվում է Սենա գետի ափին, հայտնի է իր աշտարակով',
             answer: 'Փարիզ',
             country: 'Ֆրանսիա',
             continent: 'Եվրոպա',
             points: 350,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1661964003610-2422de390fec?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1661964003610-2422de390fec?q=80&w=1170&auto=format&fit=crop'
             },
             funFact: 'Աշխարհի ամենաշատ այցելվող քաղաքը',
             difficulty: 'easy'
@@ -299,17 +300,17 @@ const GeoMysteryGame = () => {
         {
             id: 12,
             type: 'culture',
-            title: '🎭 Ո՞ր երկրի ավանդական կերպարն է',
+            title: '🎭 Ո՞ր երկրի ավանդական պարն է',
             hint: 'Հայտնի իսպանական պար, կարմիր զգեստ',
-            answer: 'Ֆլամենկո պարող (Իսպանիա)',
+            answer: 'Ֆլամենկո (Իսպանիա)',
             country: 'Իսպանիա',
             continent: 'Եվրոպա',
             points: 300,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1685094987286-fa4ce5edd55c?q=80&w=1184&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1685094987286-fa4ce5edd55c?q=80&w=1184&auto=format&fit=crop'
             },
-            funFact: 'Ֆլամենկոն ներառված է ՅՈՒՆԵՍԿՕ-ի ոչ նյութական մշակութային ժառանգության ցանկում',
+            funFact: 'Ներառված է ՅՈՒՆԵՍԿՕ-ի ոչ նյութական մշակութային ժառանգության ցանկում',
             difficulty: 'medium'
         },
         {
@@ -323,7 +324,7 @@ const GeoMysteryGame = () => {
             points: 250,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1674591172747-2c1d461d7b68?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1674591172747-2c1d461d7b68?q=80&w=1170&auto=format&fit=crop'
             },
             funFact: '50 աստղերը ներկայացնում են 50 նահանգները',
             difficulty: 'easy'
@@ -339,413 +340,31 @@ const GeoMysteryGame = () => {
             points: 300,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1675865395876-1cf435b64e78?q=80&w=1025&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1675865395876-1cf435b64e78?q=80&w=1025&auto=format&fit=crop'
             },
             funFact: 'Կոչվում է Սուրբ Գևորգի խաչ',
             difficulty: 'medium'
         },
-        // Կլիմա և եղանակ
         {
             id: 15,
             type: 'climate',
             title: '🌪️ Ո՞ր երկիրն է այս կլիմայական պայմանների համար հայտնի',
-            hint: 'Հյուսիսային Եվրոպա, երկար ցուրտ ձմեռներ, ամառային արևի գիշերներ',
+            hint: 'Հյուսիսային Եվրոպա, երկար ձմեռներ, ամառային արևի գիշերներ',
             answer: 'Ֆինլանդիա',
             country: 'Ֆինլանդիա',
             continent: 'Եվրոպա',
             points: 400,
             media: {
                 type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1668792542980-2ce499e53d90?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+                url: 'https://plus.unsplash.com/premium_photo-1668792542980-2ce499e53d90?q=80&w=1075&auto=format&fit=crop'
             },
             funFact: 'Աշխարհի ամենաերջանիկ երկիրը մի քանի տարի անընդմեջ',
             difficulty: 'hard'
-        },
-        {
-            id: 16,
-            type: 'satellite',
-            title: '🛰️ Այս կղզու արբանյակային պատկերը',
-            hint: 'Օվկիանիա, կենդանիների և բույսերի եզակի տեսակներ',
-            answer: 'Մադագասկար',
-            country: 'Մադագասկար',
-            continent: 'Աֆրիկա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://media.istockphoto.com/id/655637600/photo/madagascar-on-realistic-model-of-earth.jpg?s=1024x1024&w=is&k=20&c=TOGAEn_cbHtdfvqpl55vSQmZ7d525mkmR3Xz-osfFvc='
-            },
-            funFact: 'Կղզու կենդանական աշխարհի 90%-ը հանդիպում է միայն այստեղ',
-            difficulty: 'expert'
-        },
-        // Փողոցային տեսարաններ
-        {
-            id: 17,
-            type: 'streetview',
-            title: '🛣️ Ո՞ր քաղաքի փողոցն է',
-            hint: 'Իտալիա, ջրանցքներ և գոնդոլներ',
-            answer: 'Վենետիկ',
-            country: 'Իտալիա',
-            continent: 'Եվրոպա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1753205978525-dab47d0832d4?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Քաղաքը կառուցված է 118 կղզիների վրա',
-            difficulty: 'medium'
-        },
-        {
-            id: 18,
-            type: 'cityscape',
-            title: '🌃 Այս գիշերային տեսարանը',
-            hint: 'Ասիա, աշխարհի ամենախիտ բնակեցված քաղաքներից մեկը',
-            answer: 'Տոկիո',
-            country: 'Ճապոնիա',
-            continent: 'Ասիա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2094'
-            },
-            funFact: 'Մետրոպոլիս տարածքի բնակչությունը 37 միլիոն է',
-            difficulty: 'hard'
-        },
-        {
-            id: 19,
-            type: 'landmark',
-            title: '🗿 Այս հնագույն քարի կերպարը',
-            hint: 'Հեռավոր կղզի, հսկայական քարե արձաններ',
-            answer: 'Զատկի կղզու մոհաի',
-            country: 'Չիլի',
-            continent: 'Հարավային Ամերիկա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://media.istockphoto.com/id/1149848567/photo/dusk-over-moa-of-ahu-ko-te-riku-easter-island-chile.jpg?s=1024x1024&w=is&k=20&c=Nke7H2kfHmGOMJXTN08rZr8CZkS2234u64YqCKX-NRI='
-            },
-            funFact: 'Կերտվել են 1250-1500 թվականներին, յուրաքանչյուրի քաշը մինչև 82 տոննա է',
-            difficulty: 'hard'
-        },
-        {
-            id: 20,
-            type: 'landmark',
-            title: '⛰️ Այս կանյոնի անունը',
-            hint: 'ԱՄՆ, Կոլորադո գետ, աշխարհի ամենախորը կանյոններից մեկը',
-            answer: 'Մեծ Կանյոն',
-            country: 'ԱՄՆ',
-            continent: 'Հյուսիսային Ամերիկա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1578510444376-54d40464b4c3?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Մոտ 6 միլիոն տարեկան է, խորությունը մինչև 1857 մետր',
-            difficulty: 'medium',
-            length: 446
-        },
-        {
-            id: 21,
-            type: 'flag',
-            title: '🇨🇦 Այս դրոշը պատկանում է',
-            hint: 'Կարմիր տերև կենտրոնում, սպիտակ ֆոն',
-            answer: 'Կանադա',
-            country: 'Կանադա',
-            continent: 'Հյուսիսային Ամերիկա',
-            points: 300,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1674591172352-0af9308f0dac?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Դրոշի վրայի տերևը շաքարի թխկու տերև է, որը Կանադայի խորհրդանիշն է',
-            difficulty: 'easy'
-        },
-        {
-            id: 22,
-            type: 'culture',
-            title: '🎎 Ո՞ր երկրի ավանդական տարազն է',
-            hint: 'Արևելյան Ասիա, կիմոնո, ծիրանածաղիկներ',
-            answer: 'Ճապոնիա',
-            country: 'Ճապոնիա',
-            continent: 'Ասիա',
-            points: 350,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1514825918313-19e9a7963735?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Կիմոնոն բառացիորեն նշանակում է "հագնելու բան"',
-            difficulty: 'medium'
-        },
-        {
-            id: 23,
-            type: 'satellite',
-            title: '🛰️ Այս թերակղզու արբանյակային պատկերը',
-            hint: 'Արբանյակային պատկերում նման է կոշիկի',
-            answer: 'Իտալիա',
-            country: 'Իտալիա',
-            continent: 'Եվրոպա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1712638009487-c6629ab57674?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Իտալիան հաճախ անվանում են "կոշիկ", նրա տեսքի պատճառով',
-            difficulty: 'hard'
-        },
-        {
-            id: 24,
-            type: 'landmark',
-            title: '🏰 Այս միջնադարյան ամրոցը',
-            hint: 'Գերմանիա, գտնվում է լեռան վրա, հայտնի հեքիաթային ամրոց',
-            answer: 'Նոյշվանշտայն ամրոց',
-            country: 'Գերմանիա',
-            continent: 'Եվրոպա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1658040204976-1084965b8fbb?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Ուոլթ Դիսնեյի համար ոգեշնչման աղբյուր է հանդիսացել Սպիտաթուշի մասին մուլտֆիլմի համար',
-            difficulty: 'hard',
-            year: 1869
-        },
-        {
-            id: 25,
-            type: 'climate',
-            title: '🌡️ Ո՞ր երկիրն է այս կլիմայական գոտում',
-            hint: 'Աշխարհի ամենաչոր տարածք, չորացած լիճ',
-            answer: 'Ատակամա անապատ (Չիլի)',
-            country: 'Չիլի',
-            continent: 'Հարավային Ամերիկա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1700566982349-e0884c479f31?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Աշխարհի ամենաչոր անապատը, որտեղ տեղումներ չեն գրանցվել 400 տարի',
-            difficulty: 'expert'
-        },
-        {
-            id: 26,
-            type: 'map',
-            title: '🗺️ Ո՞ր երկրի ուրվագիծն է',
-            hint: 'Կղզի պետություն, կենգուրու և էմու թռչուն դրոշի վրա',
-            answer: 'Ավստրալիա',
-            country: 'Ավստրալիա',
-            continent: 'Ավստրալիա',
-            points: 350,
-            media: {
-                type: 'map',
-                url: 'https://plus.unsplash.com/premium_photo-1669387726956-cf8b173dd728?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Աշխարհի միակ մայրցամաքը, որը միաժամանակ պետություն է',
-            difficulty: 'medium',
-            area: 7692024
-        },
-        {
-            id: 27,
-            type: 'landmark',
-            title: '🕍 Այս մզկիթի անունը',
-            hint: 'Թուրքիա, վեց մինարեթներ, կապույտ սալիկներ',
-            answer: 'Սուլթան Ահմեդ մզկիթ (Կապույտ մզկիթ)',
-            country: 'Թուրքիա',
-            continent: 'Ասիա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1621847396754-e8d2e02e1c5c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Պարունակում է ավելի քան 20,000 ձեռքով պատրաստված կերամիկական սալիկ',
-            difficulty: 'hard',
-            year: 1616
-        },
-        {
-            id: 28,
-            type: 'cityscape',
-            title: '🏙️ Ո՞ր մայրաքաղաքը հայտնի է իր բազմագույն տներով',
-            hint: 'Հյուսիսային Եվրոպա, կանալներ, գոտիկային տներ',
-            answer: 'Ամստերդամ',
-            country: 'Նիդերլանդներ',
-            continent: 'Եվրոպա',
-            points: 350,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1697730255443-c6904e521d94?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Քաղաքը կառուցված է 90 կղզիների վրա, որոնք միացված են ավելի քան 1000 կամուրջներով',
-            difficulty: 'medium'
-        },
-        {
-            id: 29,
-            type: 'landmark',
-            title: '🌋 Այս գործող հրաբուխը',
-            hint: 'Իտալիա, Եվրոպայի միակ գործող հրաբուխը',
-            answer: 'Վեզուվ հրաբուխ',
-            country: 'Իտալիա',
-            continent: 'Եվրոպա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1657635141731-3f3811d030b8?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: '79 թվականին ոչնչացրել է Պոմպեյ և Հերկուլանում քաղաքները',
-            difficulty: 'hard',
-            height: 1281
-        },
-        {
-            id: 30,
-            type: 'flag',
-            title: '🇧🇷 Այս երկրի դրոշը',
-            hint: 'Կանաչ ֆոն, դեղին ռոմբուս, կապույտ գունդ',
-            answer: 'Բրազիլիա',
-            country: 'Բրազիլիա',
-            continent: 'Հարավային Ամերիկա',
-            points: 300,
-            media: {
-                type: 'image',
-                url: 'https://plus.unsplash.com/premium_photo-1674591173482-ffb087662b4d?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Դրոշի վրայի աստղերը պատկերում են երկնքի տեսարանը Ռիո դե Ժանեյրոյից 1889 թվականի նոյեմբերի 15-ին',
-            difficulty: 'medium'
-        },
-        {
-            id: 31,
-            type: 'culture',
-            title: '🕌 Այս ճարտարապետական համալիրը',
-            hint: 'Հնդկաստան, սպիտակ մարմարից, սիրո հուշարձան',
-            answer: 'Տաջ Մահալ',
-            country: 'Հնդկաստան',
-            continent: 'Ասիա',
-            points: 500,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Կառուցվել է 22 տարվա ընթացքում 20,000 աշխատողների կողմից',
-            difficulty: 'expert',
-            year: 1653
-        },
-        {
-            id: 32,
-            type: 'satellite',
-            title: '🛰️ Այս առեղծվածային գծերը',
-            hint: 'Պերուի անապատ, հսկայական երկրաչափական գծեր',
-            answer: 'Նասկայի գծեր',
-            country: 'Պերու',
-            continent: 'Հարավային Ամերիկա',
-            points: 500,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1669092557499-093cb88dc249?q=80&w=1333&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Ստեղծվել են 500 տարի մ.թ.ա. և տեսանելի են միայն բարձրությունից',
-            difficulty: 'expert'
-        },
-        {
-            id: 33,
-            type: 'landmark',
-            title: '🌉 Այս կախովի կամուրջը',
-            hint: 'ԱՄՆ, Սան Ֆրանցիսկո, նարնջագույն',
-            answer: 'Ոսկե դարպասների կամուրջ',
-            country: 'ԱՄՆ',
-            continent: 'Հյուսիսային Ամերիկա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1521747116042-5a810fda9664?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: '1937 թվականին կառուցված ամենաերկար կախովի կամուրջն էր աշխարհում',
-            difficulty: 'medium',
-            length: 2737
-        },
-        {
-            id: 34,
-            type: 'climate',
-            title: '🌀 Այս երկիրը հայտնի է մուսոնային կլիմայով',
-            hint: 'Հարավային Ասիա, աշխարհի ամենաբնակեցված երկրներից',
-            answer: 'Հնդկաստան',
-            country: 'Հնդկաստան',
-            continent: 'Ասիա',
-            points: 350,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1661868678317-13067cfbb00d?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Տարեկան մուսոնային անձրևները կարող են հասնել 11,000 մմ-ի',
-            difficulty: 'medium'
-        },
-        {
-            id: 35,
-            type: 'cityscape',
-            title: '🌇 Այս ժամանակակից քաղաքի պատկերը',
-            hint: 'Արաբական թերակղզի, աշխարհի ամենաբարձր շենքը',
-            answer: 'Դուբայ',
-            country: 'Արաբական Միացյալ Էմիրություններ',
-            continent: 'Ասիա',
-            points: 450,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1661630804516-10393c1bb0a8?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Բուրջ Խալիֆան աշխարհի ամենաբարձր շենքն է՝ 828 մետր բարձրությամբ',
-            difficulty: 'hard'
-        },
-        {
-            id: 36,
-            type: 'landmark',
-            title: '🏰 Այս գոթական տաճարը',
-            hint: 'Ֆրանսիա, Նոտր Դամ, հայտնի վեպի գործողությունների վայր',
-            answer: 'Նոտր Դամ տաճար (Փարիզ)',
-            country: 'Ֆրանսիա',
-            continent: 'Եվրոպա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1644603100611-6df3661890cf?q=80&w=1167&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Շինարարությունը տևել է ավելի քան 200 տարի (1163-1345)',
-            difficulty: 'hard',
-            year: 1345
-        },
-        {
-            id: 37,
-            type: 'map',
-            title: '🗺️ Ո՞ր երկրի ուրվագիծն է',
-            hint: 'Պատանի պետություն, Կովկասյան լեռներ',
-            answer: 'Վրաստան',
-            country: 'Վրաստան',
-            continent: 'Ասիա',
-            points: 300,
-            media: {
-                type: 'map',
-                url: 'https://plus.unsplash.com/premium_photo-1713364681470-b8165888f31a?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Կարծիք կա, որ գինեգործությունն առաջացել է Վրաստանում 8000 տարի առաջ',
-            difficulty: 'medium',
-            area: 69700
-        },
-        {
-            id: 38,
-            type: 'streetview',
-            title: '🛤️ Ո՞ր քաղաքի պատմական կենտրոնն է',
-            hint: 'Ռուսաստան, Կարմիր հրապարակ, գունագեղ գմբեթներ',
-            answer: 'Մոսկվա',
-            country: 'Ռուսաստան',
-            continent: 'Եվրոպա',
-            points: 400,
-            media: {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1764726198740-5c2fd87f28af?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-            },
-            funFact: 'Կարմիր հրապարակի անունը կապված չէ կոմունիզմի կամ կարմիր գույնի հետ, այլ նշանակում է "գեղեցիկ" հին ռուսերենում',
-            difficulty: 'medium'
         }
-        // Հետագա հարցեր 100+...
-        // [ԿԱՐԵՎՈՐ: Այստեղ ավելացրեք 100+ լրացուցիչ հարցեր]
     ];
 
     const [shuffledQuestions, setShuffledQuestions] = useState<GeoQuestion[]>([]);
     const [isAutoPlayBlocked, setIsAutoPlayBlocked] = useState(false);
-    const [answerOptions, setAnswerOptions] = useState<string[]>([]);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -776,12 +395,11 @@ const GeoMysteryGame = () => {
         if (gamePhase === 'playing' && shuffledQuestions.length > 0 && currentQuestion < shuffledQuestions.length) {
             const currentQ = shuffledQuestions[currentQuestion];
 
-            // Փողոցային տեսարանների համար
             if (currentQ.type === 'streetview' && currentQ.media.coordinates) {
                 loadStreetView(currentQ.media.coordinates);
             }
 
-            generateAnswerOptions();
+            resetAnswerState();
             playSound('travel');
         }
 
@@ -793,29 +411,17 @@ const GeoMysteryGame = () => {
         };
     }, [currentQuestion, gamePhase, shuffledQuestions]);
 
-    const generateAnswerOptions = () => {
-        const currentQ = shuffledQuestions[currentQuestion];
-        if (!currentQ) return;
-
-        const otherAnswers = shuffledQuestions
-            .filter(q => q.id !== currentQ.id)
-            .map(q => q.answer);
-
-        const shuffledWrongAnswers = [...otherAnswers]
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3);
-
-        const options = [...shuffledWrongAnswers, currentQ.answer];
-        setAnswerOptions(options.sort(() => Math.random() - 0.5));
+    const resetAnswerState = () => {
+        setUserAnswer('');
+        setAnswerRevealed(false);
+        setAnswerStatus('pending');
     };
 
-    // Փողոցային տեսարանի բեռնում
     const loadStreetView = (coords: [number, number]) => {
         setStreetViewLoaded(false);
         setTimeout(() => setStreetViewLoaded(true), 1000);
     };
 
-    // Գույների ընտրության տարբերակներ
     const colorOptions = [
         { value: 'from-blue-500 to-cyan-600', label: 'Ծով', icon: '🌊' },
         { value: 'from-green-500 to-emerald-600', label: 'Անտառ', icon: '🌲' },
@@ -853,10 +459,8 @@ const GeoMysteryGame = () => {
         setTimeLeft(config.timerDuration);
         setActiveTeam(0);
         setCurrentQuestion(0);
-        setShowAnswer(false);
-        setSelectedAnswer('');
+        resetAnswerState();
         setHintUsed(false);
-        generateAnswerOptions();
         playSound('levelup');
     };
 
@@ -992,42 +596,44 @@ const GeoMysteryGame = () => {
         playSound('wrong');
     };
 
-    // Խաղային տրամաբանություն
-    const handleAnswer = (answer: string) => {
-        if (showAnswer) return;
-
-        setSelectedAnswer(answer);
+    // Նոր համակարգ պատասխանների համար
+    const handleAnswerSubmit = () => {
+        if (!userAnswer.trim() || answerRevealed) return;
+        
         playSound('click');
+        setAnswerRevealed(true);
+    };
 
+    const handleAnswerCheck = (isCorrect: boolean) => {
         const currentQ = shuffledQuestions[currentQuestion];
-        const isCorrect = answer === currentQ.answer;
+        
+        if (isCorrect) {
+            const newTeams = [...teams];
+            let points = currentQ.points;
+
+            if (config.pointsMultiplier) {
+                if (timeLeft > config.timerDuration * 0.66) points = Math.floor(points * 1.5);
+                else if (timeLeft > config.timerDuration * 0.33) points = Math.floor(points * 1.2);
+            }
+
+            newTeams[activeTeam].score += points;
+            setTeams(newTeams);
+            playSound('correct');
+            launchConfetti();
+            setAnswerStatus('correct');
+        } else {
+            playSound('wrong');
+            setAnswerStatus('incorrect');
+        }
 
         setTimeout(() => {
-            setShowAnswer(true);
-            setIsPlaying(false);
-
-            if (isCorrect) {
-                const newTeams = [...teams];
-                let points = currentQ.points;
-
-                if (config.pointsMultiplier) {
-                    if (timeLeft > config.timerDuration * 0.66) points = Math.floor(points * 1.5);
-                    else if (timeLeft > config.timerDuration * 0.33) points = Math.floor(points * 1.2);
-                }
-
-                newTeams[activeTeam].score += points;
-                setTeams(newTeams);
-                playSound('correct');
-                launchConfetti();
-            } else {
-                playSound('wrong');
-            }
-        }, 500);
+            nextQuestion();
+        }, 2000);
     };
 
     const handleTimeUp = () => {
         setIsPlaying(false);
-        setShowAnswer(true);
+        setAnswerRevealed(true);
         playSound('timeup');
     };
 
@@ -1036,13 +642,11 @@ const GeoMysteryGame = () => {
 
         if (currentQuestion < shuffledQuestions.length - 1) {
             setCurrentQuestion(currentQuestion + 1);
-            setShowAnswer(false);
-            setSelectedAnswer('');
             setTimeLeft(config.timerDuration);
             setIsPlaying(true);
             setHintUsed(false);
             setActiveTeam((prev) => (prev + 1) % teams.length);
-            generateAnswerOptions();
+            resetAnswerState();
             playSound('travel');
         } else {
             endGame();
@@ -1050,7 +654,7 @@ const GeoMysteryGame = () => {
     };
 
     const useHint = () => {
-        if (!hintUsed && config.enableHints && !showAnswer) {
+        if (!hintUsed && config.enableHints && !answerRevealed) {
             setHintUsed(true);
             playSound('hint');
             const newTeams = [...teams];
@@ -1134,7 +738,7 @@ const GeoMysteryGame = () => {
         }
     };
 
-    // ========== ՀԱՏՈՒԿ ԿՈՄՊՈՆԵՆՏՆԵՐ GEO-MYSTERY-ի ՀԱՄԱՐ ==========
+    // ========== ՀԱՏՈՒԿ ԿՈՄՊՈՆԵՆՏՆԵՐ ==========
 
     const ContinentBadge = ({ continent }: { continent: string }) => {
         const colors: Record<string, string> = {
@@ -1285,7 +889,7 @@ const GeoMysteryGame = () => {
                             <div className="flex flex-wrap justify-center gap-4 mt-8">
                                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
                                     <Globe className="w-5 h-5 text-blue-400" />
-                                    <span className="text-white">150+ աշխարհագրական հարց</span>
+                                    <span className="text-white">15+ աշխարհագրական հարց</span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
                                     <Camera className="w-5 h-5 text-green-400" />
@@ -1616,12 +1220,13 @@ const GeoMysteryGame = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        {['Հայաստան', 'Վրաստան', 'Իրան', 'Թուրքիա'].map((opt, i) => (
-                                                            <div key={i} className="bg-white/5 p-3 rounded-lg border border-white/10 text-white/70 text-sm text-center">
-                                                                {opt}
-                                                            </div>
-                                                        ))}
+                                                    <div className="space-y-2">
+                                                        <div className="text-white/70 text-sm">Ձեր պատասխանը:</div>
+                                                        <Input 
+                                                            placeholder="Մուտքագրեք ձեր պատասխանը..." 
+                                                            className="bg-white/5 border-white/10 text-white"
+                                                            disabled
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -1683,14 +1288,14 @@ const GeoMysteryGame = () => {
                                                 },
                                                 {
                                                     icon: '🎯',
-                                                    title: 'Հաղթողի որոշում',
+                                                    title: 'Պատասխանների համակարգ',
                                                     points: [
-                                                        'Ամենաբարձր միավորներ',
-                                                        'Ամենաարագ պատասխաններ',
-                                                        'Առանց հուշումների խաղ',
-                                                        'Թիմային համագործակցություն',
-                                                        'Աշխարհագրական գիտելիքներ',
-                                                        'Տեղեկատվության վերլուծություն'
+                                                        'Մուտքագրեք ձեր պատասխանը',
+                                                        'Սեղմեք "Ստուգել"',
+                                                        'Տեսեք ճիշտ պատասխանը',
+                                                        'Սեղմեք "Ճիշտ է" կամ "Սխալ է"',
+                                                        'Միավորները կհաշվարկվեն ավտոմատ',
+                                                        'Հաջորդ հարցը կցուցադրվի 2 վայրկյան հետո'
                                                     ]
                                                 }
                                             ].map((section, idx) => (
@@ -1904,7 +1509,7 @@ const GeoMysteryGame = () => {
 
                                     <Button
                                         onClick={useHint}
-                                        disabled={hintUsed || showAnswer || !config.enableHints}
+                                        disabled={hintUsed || answerRevealed || !config.enableHints}
                                         className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 backdrop-blur-md border-0 hover:scale-110 transition-all"
                                         size="icon"
                                     >
@@ -1978,102 +1583,124 @@ const GeoMysteryGame = () => {
                                 {shuffledQuestions[currentQuestion] && getMediaComponent(shuffledQuestions[currentQuestion])}
                             </div>
 
-                            {/* Պատասխաններ */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                                {answerOptions.map((answer, idx) => (
-                                    <Button
-                                        key={idx}
-                                        onClick={() => handleAnswer(answer)}
-                                        disabled={showAnswer}
-                                        className={`group relative p-8 text-xl font-bold h-auto min-h-[100px] rounded-2xl transition-all duration-300 overflow-hidden ${showAnswer && shuffledQuestions[currentQuestion]
-                                            ? answer === shuffledQuestions[currentQuestion].answer
-                                                ? 'bg-gradient-to-r from-emerald-500 to-green-600 border-4 border-emerald-400 text-white scale-105 shadow-2xl shadow-emerald-500/50'
-                                                : selectedAnswer === answer
-                                                    ? 'bg-gradient-to-r from-red-500 to-pink-600 border-4 border-red-400 text-white'
-                                                    : 'bg-white/5 border-2 border-white/10 text-white/60'
-                                            : 'bg-gradient-to-br from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 border-2 border-white/20 hover:border-white/40 text-white hover:scale-[1.03] hover:shadow-2xl'
-                                            }`}
-                                    >
-                                        <span className="relative z-10">{answer}</span>
-                                        {!showAnswer && (
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                        )}
-                                    </Button>
-                                ))}
-                            </div>
+                            {/* Պատասխանների համակարգ */}
+                            <div className="max-w-3xl mx-auto space-y-8">
+                                {/* Պատասխան մուտքագրման դաշտ */}
+                                <div className="space-y-4">
+                                    <Label className="text-white text-xl font-bold flex items-center gap-2">
+                                        <User className="w-5 h-5" />
+                                        {teams[activeTeam]?.name} թիմի պատասխանը:
+                                    </Label>
+                                    <div className="flex gap-4">
+                                        <Input
+                                            value={userAnswer}
+                                            onChange={(e) => setUserAnswer(e.target.value)}
+                                            placeholder="Մուտքագրեք ձեր պատասխանը այստեղ..."
+                                            disabled={answerRevealed}
+                                            className="h-16 text-xl bg-white/10 border-white/30 text-white placeholder-white/50 rounded-2xl flex-1"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && userAnswer.trim() && !answerRevealed) {
+                                                    handleAnswerSubmit();
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            onClick={handleAnswerSubmit}
+                                            disabled={!userAnswer.trim() || answerRevealed}
+                                            className="h-16 px-8 text-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-2xl"
+                                        >
+                                            <Eye className="w-5 h-5 mr-2" />
+                                            Ստուգել
+                                        </Button>
+                                    </div>
+                                </div>
 
-                            {/* Պատասխանի բացահայտում */}
-                            {showAnswer && shuffledQuestions[currentQuestion] && (
-                                <div className="max-w-5xl mx-auto space-y-8 text-center animate-in fade-in duration-500">
-                                    <div className="relative bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-emerald-500/30 backdrop-blur-xl p-8 rounded-3xl border-2 border-white/30 shadow-2xl overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-x-16 -translate-y-16" />
-                                        <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-16 translate-y-16" />
-
-                                        <div className="relative z-10">
-                                            <div className="flex items-center justify-center gap-6 mb-6">
-                                                <div className="text-5xl animate-bounce">
-                                                    {selectedAnswer === shuffledQuestions[currentQuestion].answer ? '🎉' : '💡'}
-                                                </div>
+                                {/* Պատասխանի բացահայտում */}
+                                {answerRevealed && shuffledQuestions[currentQuestion] && (
+                                    <div className="space-y-6 animate-in fade-in duration-500">
+                                        <div className="bg-gradient-to-r from-blue-500/30 to-cyan-500/30 backdrop-blur-lg p-6 rounded-2xl border-2 border-white/30">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="text-3xl">💡</div>
                                                 <div>
-                                                    <h3 className="text-3xl font-bold text-white mb-2">
-                                                        {selectedAnswer === shuffledQuestions[currentQuestion].answer
-                                                            ? 'ՃԻՇՏ ՊԱՏԱՍԽԱՆ'
-                                                            : 'ՃՇՏԵՄՈՒՄ'}
-                                                    </h3>
-                                                    <div className="text-2xl text-yellow-300 font-black">
-                                                        Պատասխան՝ {shuffledQuestions[currentQuestion].answer}
+                                                    <div className="text-xl font-bold text-white">Ճիշտ պատասխանը:</div>
+                                                    <div className="text-2xl font-black text-yellow-300 mt-2">
+                                                        {shuffledQuestions[currentQuestion].answer}
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                                <div className="bg-black/30 p-4 rounded-xl">
-                                                    <div className="text-white/70 mb-1">Երկիր</div>
-                                                    <div className="text-xl text-white font-bold">{shuffledQuestions[currentQuestion].country}</div>
+                                            
+                                            <div className="flex items-center justify-between p-4 bg-black/30 rounded-xl">
+                                                <div className="text-white">
+                                                    {shuffledQuestions[currentQuestion].country} • {shuffledQuestions[currentQuestion].continent}
                                                 </div>
-                                                <div className="bg-black/30 p-4 rounded-xl">
-                                                    <div className="text-white/70 mb-1">Աշխարհամաս</div>
-                                                    <div className="text-xl text-white font-bold">
-                                                        {shuffledQuestions[currentQuestion].continent}
-                                                    </div>
-                                                </div>
-                                                <div className="bg-black/30 p-4 rounded-xl">
-                                                    <div className="text-white/70 mb-1">Միավորներ</div>
-                                                    <div className="text-2xl text-yellow-300 font-bold">{shuffledQuestions[currentQuestion].points}</div>
-                                                </div>
-                                            </div>
-
-                                            {shuffledQuestions[currentQuestion].year && (
-                                                <div className="bg-black/40 p-4 rounded-xl border border-white/20 mb-6">
-                                                    <div className="text-xl text-white/90 italic">
-                                                        {shuffledQuestions[currentQuestion].funFact}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="bg-black/40 p-6 rounded-xl border border-white/20">
-                                                <div className="text-xl text-white/90 italic">
-                                                    {shuffledQuestions[currentQuestion].funFact}
+                                                <div className="text-yellow-300 font-bold">
+                                                    {shuffledQuestions[currentQuestion].points} միավոր
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <Button
-                                        onClick={nextQuestion}
-                                        className="px-16 py-8 text-2xl font-black rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-emerald-600 hover:from-blue-500 hover:via-cyan-500 hover:to-emerald-500 hover:scale-105 transition-transform group shadow-2xl shadow-blue-500/30"
-                                    >
-                                        {currentQuestion < shuffledQuestions.length - 1 ? (
-                                            <>
-                                                Հաջորդ կանգառ
-                                                <Plane className="w-8 h-8 ml-4 group-hover:translate-x-2 transition-transform" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                Տեսնել արդյունքները
-                                                <Trophy className="w-8 h-8 ml-4 animate-spin" />
-                                            </>
+                                        {/* Պատասխանի գնահատման կոճակներ */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Button
+                                                onClick={() => handleAnswerCheck(true)}
+                                                disabled={answerStatus !== 'pending'}
+                                                className={`h-16 text-lg font-bold rounded-2xl transition-all ${answerStatus === 'correct' 
+                                                    ? 'bg-gradient-to-r from-emerald-600 to-green-600 border-4 border-emerald-400' 
+                                                    : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400'}`}
+                                            >
+                                                <CheckCircle className="w-6 h-6 mr-3" />
+                                                Ճիշտ է
+                                            </Button>
+                                            
+                                            <Button
+                                                onClick={() => handleAnswerCheck(false)}
+                                                disabled={answerStatus !== 'pending'}
+                                                className={`h-16 text-lg font-bold rounded-2xl transition-all ${answerStatus === 'incorrect'
+                                                    ? 'bg-gradient-to-r from-red-600 to-pink-600 border-4 border-red-400'
+                                                    : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400'}`}
+                                            >
+                                                <XCircle className="w-6 h-6 mr-3" />
+                                                Սխալ է
+                                            </Button>
+                                        </div>
+
+                                        {/* Պատասխանի կարգավիճակ */}
+                                        {answerStatus !== 'pending' && (
+                                            <div className={`text-center p-4 rounded-xl ${answerStatus === 'correct' 
+                                                ? 'bg-emerald-500/20 text-emerald-300' 
+                                                : 'bg-red-500/20 text-red-300'}`}>
+                                                {answerStatus === 'correct' 
+                                                    ? `🎉 Ճիշտ է! +${shuffledQuestions[currentQuestion].points} միավոր` 
+                                                    : '😔 Սխալ է, միավորներ չեն հաշվարկվել'}
+                                            </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Հետաքրքիր փաստ */}
+                                {shuffledQuestions[currentQuestion] && (
+                                    <div className="bg-black/30 p-4 rounded-xl border border-white/20 mt-4">
+                                        <div className="text-lg text-white/90 italic">
+                                            💡 Հետաքրքիր փաստ: {shuffledQuestions[currentQuestion].funFact}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Բաց թողնելու կոճակ */}
+                            {!answerRevealed && (
+                                <div className="text-center">
+                                    <Button
+                                        onClick={() => {
+                                            setAnswerRevealed(true);
+                                            setAnswerStatus('incorrect');
+                                            setTimeout(() => nextQuestion(), 2000);
+                                        }}
+                                        variant="outline"
+                                        className="border-white/30 text-white/70 hover:bg-white/10"
+                                    >
+                                        <SkipForward className="w-5 h-5 mr-2" />
+                                        Բաց թողնել հարցը
                                     </Button>
                                 </div>
                             )}
@@ -2153,7 +1780,7 @@ const GeoMysteryGame = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl w-full">
                             {[
                                 {
-                                    label: 'Անցած կանգառներ',
+                                    label: 'Անցած հարցեր',
                                     value: currentQuestion + 1,
                                     icon: '📍',
                                     color: 'from-blue-500 to-cyan-500'
@@ -2171,7 +1798,7 @@ const GeoMysteryGame = () => {
                                     color: 'from-emerald-500 to-green-500'
                                 },
                                 {
-                                    label: 'Ճանապարհորդության ժամանակ',
+                                    label: 'Խաղի տևողություն',
                                     value: `${Math.round((currentQuestion + 1) * config.timerDuration / 60)} րոպե`,
                                     icon: '⏱️',
                                     color: 'from-purple-500 to-pink-500'
@@ -2192,12 +1819,10 @@ const GeoMysteryGame = () => {
                                     setGamePhase('playing');
                                     setCurrentQuestion(0);
                                     setTimeLeft(config.timerDuration);
-                                    setShowAnswer(false);
-                                    setSelectedAnswer('');
                                     setTeams(teams.map(t => ({ ...t, score: 0 })));
                                     setActiveTeam(0);
                                     setIsPlaying(true);
-                                    setHintUsed(false);
+                                    resetAnswerState();
                                 }}
                                 className="px-10 py-8 text-2xl font-black rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 hover:scale-105 transition-transform shadow-2xl shadow-emerald-500/30"
                             >
@@ -2211,7 +1836,7 @@ const GeoMysteryGame = () => {
                                 className="px-10 py-8 text-2xl font-black rounded-2xl border-3 border-white/30 hover:bg-white/10 hover:scale-105 transition-transform"
                             >
                                 <Settings className="w-8 h-8 mr-4" />
-                                Նոր ճանապարհորդություն
+                                Նոր խաղ
                             </Button>
 
                             <Button
@@ -2231,15 +1856,6 @@ const GeoMysteryGame = () => {
                         </div>
                     </div>
                 )}
-            </div>
-
-            {/* Ստեղնաշարի արագ հրամաններ */}
-            <div className="hidden">
-                Ստեղնաշարի կարճ հրամաններ․
-                Space - Ժամանակաչափի դադարեցում/շարունակում
-                H - Հուշում օգտագործել
-                1-4 - Պատասխան ընտրել
-                N - Հաջորդ հարց
             </div>
 
             <style jsx>{`
