@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import GuessTheMelody from './guessMedlody';
 
-// В вашей page.tsx
+
 export default function GamePage() {
   return (
     <Suspense fallback={
