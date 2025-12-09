@@ -596,12 +596,12 @@ const GeoMysteryGame = () => {
         playSound('wrong');
     };
 
-    // Նոր համակարգ պատասխանների համար
-    const handleAnswerSubmit = () => {
-        if (!userAnswer.trim() || answerRevealed) return;
+    const revealAnswer = () => {
+        if (answerRevealed) return;
 
         playSound('click');
         setAnswerRevealed(true);
+        setIsPlaying(false);
     };
 
     const handleAnswerCheck = (isCorrect: boolean) => {
@@ -611,9 +611,12 @@ const GeoMysteryGame = () => {
             const newTeams = [...teams];
             let points = currentQ.points;
 
-            if (config.pointsMultiplier) {
-                if (timeLeft > config.timerDuration * 0.66) points = Math.floor(points * 1.5);
-                else if (timeLeft > config.timerDuration * 0.33) points = Math.floor(points * 1.2);
+            // Бонус за скорость теперь не применяется, так как время остановлено
+            // Но можно оставить базовые очки
+            if (config.pointsMultiplier && timeLeft > 0) {
+                // Можно оставить небольшой бонус, если ответили быстро
+                if (timeLeft > config.timerDuration * 0.66) points = Math.floor(points * 1.2);
+                else if (timeLeft > config.timerDuration * 0.33) points = Math.floor(points * 1.1);
             }
 
             newTeams[activeTeam].score += points;
@@ -626,9 +629,10 @@ const GeoMysteryGame = () => {
             setAnswerStatus('incorrect');
         }
 
+        // Автоматически переходим к следующему вопросу через 3 секунды
         setTimeout(() => {
             nextQuestion();
-        }, 2000);
+        }, 3000);
     };
 
     const handleTimeUp = () => {
@@ -1585,56 +1589,57 @@ const GeoMysteryGame = () => {
 
                             {/* Պատասխանների համակարգ */}
                             <div className="max-w-3xl mx-auto space-y-8">
-                                {/* Պատասխան մուտքագրման դաշտ */}
-                                <div className="space-y-4">
-                                    <Label className="text-white text-xl font-bold flex items-center gap-2">
-                                        <User className="w-5 h-5" />
-                                        {teams[activeTeam]?.name} թիմի պատասխանը:
-                                    </Label>
-                                    <div className="flex gap-4">
-                                        <Input
-                                            value={userAnswer}
-                                            onChange={(e) => setUserAnswer(e.target.value)}
-                                            placeholder="Մուտքագրեք ձեր պատասխանը այստեղ..."
-                                            disabled={answerRevealed}
-                                            className="h-16 text-xl bg-white/10 border-white/30 text-white placeholder-white/50 rounded-2xl flex-1"
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && userAnswer.trim() && !answerRevealed) {
-                                                    handleAnswerSubmit();
-                                                }
-                                            }}
-                                        />
+                                {/* Кнопка раскрытия ответа - теперь основная */}
+                                {!answerRevealed && (
+                                    <div className="text-center space-y-4">
+                                        <p className="text-white/70 text-lg">
+                                            {teams[activeTeam]?.name} թիմը պատրաստ է պատասխանել
+                                        </p>
                                         <Button
-                                            onClick={handleAnswerSubmit}
-                                            disabled={!userAnswer.trim() || answerRevealed}
-                                            className="h-16 px-8 text-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-2xl"
+                                            onClick={revealAnswer}
+                                            className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-2xl shadow-2xl shadow-blue-500/30 hover:scale-105 transition-transform"
                                         >
-                                            <Eye className="w-5 h-5 mr-2" />
-                                            Ստուգել
+                                            <Eye className="w-6 h-6 mr-3" />
+                                            Բացել պատասխանը
                                         </Button>
+                                        <p className="text-white/50 text-sm">
+                                            Սեղմեք՝ տեսնելու ճիշտ պատասխանը և գնահատել թիմի պատասխանը
+                                        </p>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Պատասխանի բացահայտում */}
                                 {answerRevealed && shuffledQuestions[currentQuestion] && (
                                     <div className="space-y-6 animate-in fade-in duration-500">
                                         <div className="bg-gradient-to-r from-blue-500/30 to-cyan-500/30 backdrop-blur-lg p-6 rounded-2xl border-2 border-white/30">
                                             <div className="flex items-center gap-4 mb-4">
-                                                <div className="text-3xl">💡</div>
+                                                <div className="text-3xl">🎯</div>
                                                 <div>
                                                     <div className="text-xl font-bold text-white">Ճիշտ պատասխանը:</div>
-                                                    <div className="text-2xl font-black text-yellow-300 mt-2">
+                                                    <div className="text-3xl font-black text-yellow-300 mt-2 animate-pulse">
                                                         {shuffledQuestions[currentQuestion].answer}
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between p-4 bg-black/30 rounded-xl">
-                                                <div className="text-white">
-                                                    {shuffledQuestions[currentQuestion].country} • {shuffledQuestions[currentQuestion].continent}
+                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                                <div className="bg-black/30 p-3 rounded-xl">
+                                                    <div className="text-white/70 text-sm">Երկիր</div>
+                                                    <div className="text-lg font-bold text-white">
+                                                        {shuffledQuestions[currentQuestion].country}
+                                                    </div>
                                                 </div>
-                                                <div className="text-yellow-300 font-bold">
-                                                    {shuffledQuestions[currentQuestion].points} միավոր
+                                                <div className="bg-black/30 p-3 rounded-xl">
+                                                    <div className="text-white/70 text-sm">Միավորներ</div>
+                                                    <div className="text-lg font-bold text-yellow-300">
+                                                        {shuffledQuestions[currentQuestion].points}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-center p-3 bg-black/40 rounded-xl">
+                                                <div className="text-white">
+                                                    {teams[activeTeam]?.name} թիմի պատասխանը ճի՞շտ էր
                                                 </div>
                                             </div>
                                         </div>
@@ -1649,7 +1654,7 @@ const GeoMysteryGame = () => {
                                                     : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400'}`}
                                             >
                                                 <CheckCircle className="w-6 h-6 mr-3" />
-                                                Ճիշտ է
+                                                Այո, ճիշտ է
                                             </Button>
 
                                             <Button
@@ -1660,7 +1665,7 @@ const GeoMysteryGame = () => {
                                                     : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400'}`}
                                             >
                                                 <XCircle className="w-6 h-6 mr-3" />
-                                                Սխալ է
+                                                Ոչ, սխալ է
                                             </Button>
                                         </div>
 
@@ -1669,23 +1674,46 @@ const GeoMysteryGame = () => {
                                             <div className={`text-center p-4 rounded-xl ${answerStatus === 'correct'
                                                 ? 'bg-emerald-500/20 text-emerald-300'
                                                 : 'bg-red-500/20 text-red-300'}`}>
-                                                {answerStatus === 'correct'
-                                                    ? `🎉 Ճիշտ է! +${shuffledQuestions[currentQuestion].points} միավոր`
-                                                    : '😔 Սխալ է, միավորներ չեն հաշվարկվել'}
+                                                <div className="flex items-center justify-center gap-3">
+                                                    {answerStatus === 'correct'
+                                                        ? <><Trophy className="w-6 h-6" /> <span>Շնորհավորում ենք! +{shuffledQuestions[currentQuestion].points} միավոր</span></>
+                                                        : <><Clock className="w-6 h-6" /> <span>Հաջորդ անգամ ավելի լավ</span></>}
+                                                </div>
+                                                <div className="text-sm mt-2 opacity-80">
+                                                    Հաջորդ հարցը կցուցադրվի 3 վայրկյան հետո...
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
+
                                 {/* Հետաքրքիր փաստ */}
                                 {shuffledQuestions[currentQuestion] && (
-                                    <div className="bg-black/30 p-4 rounded-xl border border-white/20 mt-4">
-                                        <div className="text-lg text-white/90 italic">
-                                            💡 Հետաքրքիր փաստ: {shuffledQuestions[currentQuestion].funFact}
+                                    <div className={`bg-black/30 p-4 rounded-xl border ${answerRevealed ? 'border-emerald-500/30' : 'border-white/20'} transition-all`}>
+                                        <div className="flex items-start gap-3">
+                                            <div className="text-2xl mt-1">💡</div>
+                                            <div>
+                                                <div className="text-lg font-semibold text-white/90 mb-1">Հետաքրքիր փաստ</div>
+                                                <div className="text-white/80 italic">
+                                                    {shuffledQuestions[currentQuestion].funFact}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
                             </div>
+
+                            {!answerRevealed && (
+                                <div className="text-center">
+                                    <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full">
+                                        <Clock className="w-5 h-5 text-blue-400" />
+                                        <span className="text-white font-mono text-lg">
+                                            Մնացած ժամանակ: <span className={timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-green-400'}>{timeLeft} վ</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Բաց թողնելու կոճակ */}
                             {!answerRevealed && (
@@ -1694,13 +1722,16 @@ const GeoMysteryGame = () => {
                                         onClick={() => {
                                             setAnswerRevealed(true);
                                             setAnswerStatus('incorrect');
-                                            setTimeout(() => nextQuestion(), 2000);
+                                            setTimeout(() => nextQuestion(), 3000);
                                         }}
-                                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white border-0"
+                                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white border-0 shadow-lg hover:scale-105 transition-transform px-8"
                                     >
                                         <SkipForward className="w-5 h-5 mr-2" />
                                         Բաց թողնել հարցը
                                     </Button>
+                                    <p className="text-white/50 text-sm mt-2">
+                                        Սեղմեք՝ բաց թողնելու հարցը և անցնելու հաջորդին
+                                    </p>
                                 </div>
                             )}
                         </div>

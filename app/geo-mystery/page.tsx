@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import GeoMysteryGame from './geo-mystery';
 
-// В вашей page.tsx
 export default function GamePage() {
   return (
     <Suspense fallback={
