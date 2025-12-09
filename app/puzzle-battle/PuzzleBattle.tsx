@@ -872,7 +872,7 @@ const PuzzleBattleGame = () => {
 
                 <div className="text-center mb-12">
                     <div className="relative inline-block">
-                        <h1 className="text-[80px] md:text-[120px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4 leading-none tracking-tighter animate-gradient-x">
+                        <h1 className="text-[80px] md:text-[120px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4 tracking-tighter animate-gradient-x">
                             🧩 Պազլ-Մարտ
                         </h1>
                         <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping" />
@@ -1440,8 +1440,8 @@ const PuzzleBattleGame = () => {
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-3xl blur opacity-0 group-hover:opacity-50 transition duration-500" />
                             <Card className="relative p-12 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl border-2 border-white/20 shadow-2xl">
-                                <div className="text-8xl mb-8 animate-bounce">🎉</div>
-                                <h2 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6">
+                                <div className="text-[90px] mb-8 animate-bounce">🎉</div>
+                                <h2 className="text-[70px] font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6">
                                     Հաջորդ Հարցը
                                 </h2>
                                 <p className="text-2xl text-white/70 mb-8">
