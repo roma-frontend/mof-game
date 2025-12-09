@@ -6,16 +6,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Users, Zap, Trophy, Star, Gift, Puzzle, Target, Clock,
+    Users, Zap, Trophy, Star,
     Volume2, VolumeX, Plus, X, Crown, Award, Timer, RotateCcw,
-    Play, SkipForward, Brain, Lightbulb, Shield, Sword, Sparkles,
-    TrendingUp, BarChart3, MessageSquare, Eye, EyeOff, Music,
-    Palette, Sparkle, Gamepad2, Castle, Globe, Atom, BookOpen,
-    Calculator, Camera, Car, Cloud, Coffee, Compass, Database,
-    Download, Feather, Film, Flag, FlaskConical, Heart, Home, Key,
-    Layers, Leaf, Lock, Map, Moon, Package, Phone, Plane,
-    Printer, Rocket, School, Server, ShoppingBag, Sun, Tag,
-    Umbrella, Upload, Video, Wifi, Wind, Zap as Lightning
+    Play, SkipForward, Music,
+    Palette, Sparkle, Castle, Globe, Compass, FlaskConical, Rocket, Zap as Lightning
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
@@ -298,8 +292,8 @@ const PuzzleDisplay = ({ team, piecesToWin }: { team: Team, piecesToWin: number 
                             )}
 
                             <div className={`absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full transition-all duration-300 ${isRevealed
-                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
-                                    : 'bg-black/50 text-white/50'
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg'
+                                : 'bg-black/50 text-white/50'
                                 }`}>
                                 {index + 1}
                             </div>
@@ -351,10 +345,10 @@ const PuzzleDisplay = ({ team, piecesToWin }: { team: Team, piecesToWin: number 
 const soundManager = {
     sounds: {} as Record<keyof typeof soundFiles, HTMLAudioElement | null>,
     enabled: true,
-    
+
     init() {
         if (typeof window === 'undefined') return;
-        
+
         Object.entries(soundFiles).forEach(([key, url]) => {
             try {
                 // Используем any для обхода проблемы с конструктором Audio
@@ -367,10 +361,10 @@ const soundManager = {
             }
         });
     },
-    
+
     play(soundName: keyof typeof soundFiles) {
         if (!this.enabled || typeof window === 'undefined') return;
-        
+
         try {
             const audio = this.sounds[soundName];
             if (audio) {
@@ -383,17 +377,17 @@ const soundManager = {
             console.warn('Sound playback error:', error);
         }
     },
-    
+
     stop(soundName: keyof typeof soundFiles) {
         if (typeof window === 'undefined') return;
-        
+
         const audio = this.sounds[soundName];
         if (audio) {
             audio.pause();
             audio.currentTime = 0;
         }
     },
-    
+
     setEnabled(enabled: boolean) {
         this.enabled = enabled;
         if (!enabled && typeof window !== 'undefined') {
