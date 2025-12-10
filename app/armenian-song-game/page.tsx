@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Timer, Users, Trophy, Sparkles, Zap, Clock, Star, Play, Pause, RotateCcw, Settings, TrendingUp, Award, Target, Flame, Shield, Gift, Music, Mic, Volume2, VolumeX, Eye, EyeOff, ChevronRight, Plus, Minus, Check, X, Crown, Rocket, Heart, Brain, Coffee, BookOpen, Lightbulb, Siren, PartyPopper, Snowflake, Volume, Bell, AlertCircle, BrainCircuit, LightbulbOff, Moon, Sun, CloudRain, Wind, BrickWallFire, User, UserPlus, UserMinus, Edit, Trash2, Save, Mail, Phone, Briefcase, MapPin, Calendar, Hash, Flag, Trees, Home } from 'lucide-react';
 import useSound from 'use-sound';
 
@@ -95,6 +95,49 @@ const playerAvatars = ['👤', '👨', '👩', '🧑', '🧔', '👨‍💼', '�
 const ArmenianSongsGame = () => {
     const router = useRouter();
     const [gameState, setGameState] = useState<GameState>('menu');
+
+    const handleWrong = () => {
+        setCurrentStreak(0);
+
+        if (soundEnabled) playIncorrect();
+
+        setPlayers(prev => prev.map((player, idx) => {
+            if (idx === currentPlayerIndex) {
+                return {
+                    ...player,
+                    wrongAnswers: player.wrongAnswers + 1,
+                    streak: 0
+                };
+            }
+            return player;
+        }));
+
+        // В режиме Survival уменьшаем жизни
+        if (gameMode === 'survival') {
+            // Здесь можно добавить логику жизней
+        }
+
+        // В режиме Blitz сразу рисуем новое слово
+        if (gameMode === 'blitz') {
+            setTimeout(() => {
+                generateNewWord();
+                setShowWord(false);
+                setTimeLeft(difficultySettings[difficulty].time);
+            }, 500);
+        } else {
+            // В классическом режиме переходим к следующему игроку
+            setTimeout(() => {
+                endTurn(false);
+            }, 1500);
+        }
+    };
+
+    const handleTimeout = useCallback(() => {
+        setTimerActive(false);
+        handleWrong();
+    }, [handleWrong]);
+
+
     const [players, setPlayers] = useState<Player[]>([]);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     const [currentWord, setCurrentWord] = useState<Word | null>(null);
@@ -159,7 +202,11 @@ const ArmenianSongsGame = () => {
     const [playWin] = useSound('/sounds/win.mp3', { volume: 0.6 });
     const [playLose] = useSound('/sounds/lose.mp3', { volume: 0.4 });
     const [playCardFlip] = useSound('/sounds/card-flip.mp3', { volume: 0.3 });
-    const [playTimer] = useSound('/sounds/timer.mp3', { volume: 0.2 });
+    const [playTimer] = useSound('/sounds/timer.mp3', {
+        volume: 0.2,
+        interrupt: true,
+        soundEnabled: soundEnabled
+    });
     const [playClick] = useSound('/sounds/click.mp3', { volume: 0.2 });
     const [playAchievement] = useSound('/sounds/achievement.mp3', { volume: 0.5 });
     const [playSpecial] = useSound('/sounds/special.mp3', { volume: 0.4 });
@@ -529,22 +576,33 @@ const ArmenianSongsGame = () => {
         if (gameState === 'playing' && timerActive && timeLeft > 0) {
             interval = setInterval(() => {
                 setTimeLeft(prev => {
-                    if (prev <= 10 && soundEnabled) {
-                        playTimer();
+                    const newTime = prev - 1;
+
+                    // Воспроизводим звук таймера только при определенных условиях
+                    if (newTime <= 10 && soundEnabled && newTime > 0) {
+                        // Используем requestAnimationFrame для точного времени
+                        requestAnimationFrame(() => {
+                            playTimer();
+                        });
                     }
 
-                    if (prev <= 1) {
+                    if (newTime <= 0) {
                         handleTimeout();
                         return 0;
                     }
 
-                    return prev - 1;
+                    return newTime;
                 });
-            }, 1000);
+            }, 1000); // Точный интервал в 1000 мс
         }
 
-        return () => clearInterval(interval);
-    }, [gameState, timeLeft, soundEnabled, timerActive]);
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [gameState, timeLeft, soundEnabled, timerActive, playTimer, handleTimeout]);
+
 
     // Функции для управления игроками
     const addNewPlayer = () => {
@@ -626,7 +684,7 @@ const ArmenianSongsGame = () => {
     const generateNewWord = () => {
         // Фильтруем уже использованные слова
         const availableWords = armenianWords.filter(word => !usedWords.includes(word.armenian));
-        
+
         if (availableWords.length === 0) {
             // Если все слова использованы, сбрасываем историю
             setUsedWords([]);
@@ -634,13 +692,13 @@ const ArmenianSongsGame = () => {
         }
 
         // Выбираем случайное слово с учетом сложности
-        const filteredWords = availableWords.filter(word => 
-            word.difficulty <= (difficulty === 'easy' ? 2 : 
-                               difficulty === 'medium' ? 3 :
-                               difficulty === 'hard' ? 4 : 5)
+        const filteredWords = availableWords.filter(word =>
+            word.difficulty <= (difficulty === 'easy' ? 2 :
+                difficulty === 'medium' ? 3 :
+                    difficulty === 'hard' ? 4 : 5)
         );
 
-        const selectedWord = filteredWords.length > 0 
+        const selectedWord = filteredWords.length > 0
             ? filteredWords[Math.floor(Math.random() * filteredWords.length)]
             : availableWords[Math.floor(Math.random() * availableWords.length)];
 
@@ -718,56 +776,15 @@ const ArmenianSongsGame = () => {
         }
     };
 
-    const handleWrong = () => {
-        setCurrentStreak(0);
-
-        if (soundEnabled) playIncorrect();
-
-        setPlayers(prev => prev.map((player, idx) => {
-            if (idx === currentPlayerIndex) {
-                return {
-                    ...player,
-                    wrongAnswers: player.wrongAnswers + 1,
-                    streak: 0
-                };
-            }
-            return player;
-        }));
-
-        // В режиме Survival уменьшаем жизни
-        if (gameMode === 'survival') {
-            // Здесь можно добавить логику жизней
-        }
-
-        // В режиме Blitz сразу рисуем новое слово
-        if (gameMode === 'blitz') {
-            setTimeout(() => {
-                generateNewWord();
-                setShowWord(false);
-                setTimeLeft(difficultySettings[difficulty].time);
-            }, 500);
-        } else {
-            // В классическом режиме переходим к следующему игроку
-            setTimeout(() => {
-                endTurn(false);
-            }, 1500);
-        }
-    };
-
-    const handleTimeout = () => {
-        setTimerActive(false);
-        handleWrong();
-    };
-
     const endTurn = (wasCorrect: boolean) => {
         setTimerActive(false);
-        
+
         const nextQueueIndex = currentQueueIndex + 1;
-        
+
         if (nextQueueIndex < playerQueue.length) {
             // Есть следующий игрок
             setCurrentQueueIndex(nextQueueIndex);
-            
+
             // Проверяем, не закончились ли раунды
             if (nextQueueIndex === 0) {
                 // Начинаем новый раунд
@@ -779,7 +796,7 @@ const ArmenianSongsGame = () => {
                     return prev + 1;
                 });
             }
-            
+
             // Показываем экран готовности для следующего игрока
             setGameState('ready');
             if (soundEnabled) playSpecial();
@@ -799,7 +816,7 @@ const ArmenianSongsGame = () => {
 
     const endGame = () => {
         setTimerActive(false);
-        
+
         const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
         const winner = sortedPlayers[0];
 
@@ -880,7 +897,7 @@ const ArmenianSongsGame = () => {
                 setLastAction('Բացահայտման քարտ օգտագործված! Օրինակ երգ ցուցադրված');
                 break;
             case 'bonus':
-                setPlayers(prev => prev.map((player, idx) => 
+                setPlayers(prev => prev.map((player, idx) =>
                     idx === currentPlayerIndex ? { ...player, score: player.score + 5 } : player
                 ));
                 setLastAction('Բոնուս քարտ օգտագործված! +5 միավոր');
@@ -1589,7 +1606,7 @@ const ArmenianSongsGame = () => {
                                     <div className="bg-white/10 backdrop-blur-lg rounded-lg p-3 text-center">
                                         <div className="text-white/60 text-xs mb-1">Բառ/րոպե</div>
                                         <div className="text-green-300 text-xl font-bold">
-                                            {difficultySettings[difficulty].time > 0 ? 
+                                            {difficultySettings[difficulty].time > 0 ?
                                                 Math.round(totalWordsGuessed / (difficultySettings[difficulty].time / 60)) : 0}
                                         </div>
                                     </div>
@@ -1638,11 +1655,11 @@ const ArmenianSongsGame = () => {
                             <div className="text-8xl font-black text-white mb-6 animate-pulse-slow bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
                                 {currentWord?.armenian}
                             </div>
-                            
+
                             <div className="text-2xl text-white/70 mb-4">
                                 Ռուսերեն: <span className="text-yellow-300 font-bold">{currentWord?.russian}</span>
                             </div>
-                            
+
                             <div className="text-xl text-white/60 mb-6">
                                 Անգլերեն: <span className="text-blue-300">{currentWord?.english}</span>
                             </div>
@@ -1818,7 +1835,7 @@ const ArmenianSongsGame = () => {
                                             <div className="flex justify-between">
                                                 <span>Ճշգրտություն</span>
                                                 <span className="font-bold">🎯 {
-                                                    player.correctAnswers + player.wrongAnswers > 0 
+                                                    player.correctAnswers + player.wrongAnswers > 0
                                                         ? Math.round(player.correctAnswers / (player.correctAnswers + player.wrongAnswers) * 100)
                                                         : 0
                                                 }%</span>
@@ -1906,7 +1923,7 @@ const ArmenianSongsGame = () => {
                                                     <div className="text-white font-bold">{player.name}</div>
                                                     <div className="text-white/60 text-xs">
                                                         ✅ {player.correctAnswers} • ❌ {player.wrongAnswers} • 🎯 {
-                                                            player.correctAnswers + player.wrongAnswers > 0 
+                                                            player.correctAnswers + player.wrongAnswers > 0
                                                                 ? Math.round(player.correctAnswers / (player.correctAnswers + player.wrongAnswers) * 100)
                                                                 : 0
                                                         }%
