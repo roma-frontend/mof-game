@@ -103,12 +103,13 @@ const GuessTheMelody = () => {
         // МЕЖДУНАРОДНЫЕ ХИТЫ (MEDIUM/HARD) - Всем известные
         { id: 29, file: '/songs/int1.mp3', title: 'Despacito', artist: 'Luis Fonsi', difficulty: 'medium', year: '2017' },
         { id: 30, file: '/songs/int2.mp3', title: 'Gangnam Style', artist: 'PSY', difficulty: 'easy', year: '2012' },
-        { id: 31, file: '/songs/int3.mp3', title: 'Happy Birthday', artist: 'Традиционная', difficulty: 'easy', year: '1893' },
+        { id: 31, file: '/songs/int3.mp3', title: 'Happy Birthday', artist: 'Traditional', difficulty: 'easy', year: '1893' },
         { id: 32, file: '/songs/int4.mp3', title: 'We Will Rock You', artist: 'Queen', difficulty: 'medium', year: '1977' },
         { id: 33, file: '/songs/int5.mp3', title: 'Let It Go', artist: 'Frozen', difficulty: 'medium', year: '2013' },
         { id: 34, file: '/songs/int6.mp3', title: 'My Heart Will Go On', artist: 'Celine Dion', difficulty: 'medium', year: '1997' },
         { id: 35, file: '/songs/int7.mp3', title: 'Smells Like Teen Spirit', artist: 'Nirvana', difficulty: 'hard', year: '1991' },
         { id: 36, file: '/songs/int8.mp3', title: 'Billie Jean', artist: 'Michael Jackson', difficulty: 'medium', year: '1983' },
+        { id: 36, file: '/songs/int9.mp3', title: 'Santa Barbara', artist: 'People', difficulty: 'medium', year: '1984' },
     ];
 
     const wishes = [

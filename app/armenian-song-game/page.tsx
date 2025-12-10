@@ -1490,13 +1490,13 @@ const ArmenianSongsGame = () => {
             <div className={`min-h-screen bg-gradient-to-br ${getThemeClasses()} flex items-center justify-center p-4`}>
                 <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-12 border-2 border-white/20 text-center max-w-2xl">
                     <div className="text-8xl mb-6 animate-bounce">🎮</div>
-                    <h2 className="text-5xl font-bold text-white mb-4">Ձեր Շրջանն է!</h2>
+                    <h2 className="text-5xl font-bold text-white mb-4">Ձեր հերթն է!</h2>
                     <div className="mb-8">
                         <div className="text-4xl font-black text-white mb-2 flex items-center justify-center gap-3">
                             <span className="text-5xl">{player.avatar}</span>
                             {player.name}
                         </div>
-                        <div className="text-white/60 text-xl">Պատրաստվեք նշել երգ, որը պարունակում է հայկական բառ</div>
+                        <div className="text-white/60 text-xl">Պատրաստվեք նշել երգ, որը պարունակում է նշված բառը</div>
                         <div className="mt-4 text-white/40">
                             Տուր {round} / {maxRounds} • Ժամանակ՝ {difficultySettings[difficulty].time} վայրկյան
                         </div>
