@@ -1087,7 +1087,7 @@ const ArmenianSongsGame = () => {
 
                     <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 max-w-6xl w-full border-2 border-white/20 shadow-2xl relative z-10">
                         <div className="text-center mb-8">
-                            <div className="text-8xl mb-4 animate-pulse">🇦🇲</div>
+                            <div className="text-6xl text-white mb-4 animate-pulse">❤️🇦🇲</div>
                             <h1 className="text-6xl font-black text-white mb-3 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
                                 ՀԱՅԿԱԿԱՆ ԵՐԳԵՐ
                             </h1>
