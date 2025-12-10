@@ -711,7 +711,7 @@ const MovieQuizGame = () => {
         points: 350,
         media: {
             type: 'giphy',
-            url: 'https://makeagif.com/i/LWIooc',
+            url: 'https://media1.tenor.com/m/qhTRsZKQtMgAAAAd/2012movie-charlie-frost.gif',
         },
         funFact: 'Ֆիլմը օգտագործել է հսկայական քանակությամբ տեսողական էֆեկտներ',
         category: 'hollywood',
