@@ -185,7 +185,7 @@ const MovieQuizGame = () => {
             type: 'audio',
             url: '/audio/lotr.mp3',
         },
-        funFact: 'Գոլլումի կերպարը ստեղծվել է մotion capture տեխնոլոգիայով',
+        funFact: 'Գոլլումի կերպարը ստեղծվել է motion capture տեխնոլոգիայով',
         category: 'hollywood',
         difficulty: 'medium'
     },
@@ -2155,7 +2155,7 @@ useEffect(() => {
                         {/* Winner Celebration */}
                         <div className="text-center space-y-8 max-w-4xl">
                             <div className="relative">
-                                <h1 className="text-8xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 animate-gradient-slow">
+                                <h1 className="text-[90px] md:text-[110px] font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 animate-gradient-slow">
                                     🏆 Հաղթող
                                 </h1>
                                 <div className="absolute -top-6 -right-6 text-6xl animate-bounce">🎊</div>

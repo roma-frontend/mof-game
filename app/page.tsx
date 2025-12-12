@@ -249,7 +249,7 @@ const NewYearLanding = () => {
               <div className="p-4 bg-gradient-to-br from-red-400 to-pink-500 rounded-full">
                 <Wine className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white">Ուտեստներ & Խմիչքներ</h3>
+              <h3 className="text-2xl font-bold text-white">Ուտեստներ և Խմիչքներ</h3>
               <p className="text-white/80">Խաղերը ինտեգրված են համով ուտեստների և խմիչքների հետ</p>
             </div>
           </div>
