@@ -77,7 +77,7 @@ const NewYearLanding = () => {
 
         {/* Main title */}
         <div className="text-center mb-12 space-y-6">
-          <h1 className="text-[90px] md:text-[110px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-red-300 to-pink-300 drop-shadow-2xl animate-pulse">
+          <h1 className="text-[70px] md:text-[90px] lg:text-[110px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-red-300 to-pink-300 drop-shadow-2xl animate-pulse">
             Ամանորյա խաղեր
           </h1>
 
@@ -119,7 +119,7 @@ const NewYearLanding = () => {
           <div className="flex flex-wrap gap-6 justify-center">
             <Button
               onClick={() => router.push("/guess-the-melody")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -132,7 +132,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/new-year")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -146,7 +146,7 @@ const NewYearLanding = () => {
 
           <Button
               onClick={() => router.push("/geo-mystery")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -159,7 +159,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/new-year-quiz")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -173,7 +173,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/puzzle-battle")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -186,7 +186,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/armenian-song-game")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -199,7 +199,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/movie-quiz-game")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -212,7 +212,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/new-year-charades")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -225,7 +225,7 @@ const NewYearLanding = () => {
 
             <Button
               onClick={() => router.push("/truth-or-dare")}
-              className="group relative px-12 py-8 text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative px-8 md:px-12 py-7 md:py-8 text-2xl md:text-3xl font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 animate-gradient"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
